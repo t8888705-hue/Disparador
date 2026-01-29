@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SmartTools Pro — Gestão & Disparos</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a8a; --accent: #2563eb; --whatsapp: #25D366;
+            --danger: #ef4444; --bg: #f8fafc; --card: #ffffff;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding-top: 60px; color: #1e293b; }
+        
+        /* Barra de Trava de Segurança */
+        #safety-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: 55px;
+            background: #111; color: white; display: flex; align-items: center;
+            justify-content: center; z-index: 1000; font-weight: bold; transition: 0.3s;
+        }
+        #safety-bar.locked { background: var(--danger); }
+        #safety-bar.safe { background: var(--whatsapp); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Navegação por Abas */
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 10px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
+        .tab-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        .tab-content { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .tab-content.active { display: block; }
+
+        /* Filtros */
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px; }
+        label { display: block; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 5px; }
+        select, input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+
+        /* Tabela */
+        .table-wrap { overflow-x: auto; max-height: 550px; border: 1px solid #e2e8f0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #f8fafc; padding: 12px; text-align: left; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        tr:hover { background: #fdfdfd; }
+        tr.status-pago { background: #f0fdf4 !important; }
+        tr.status-enviado { background: #fffbeb !important; }
+
+        /* Relatório Estilo PDF */
+        .report-page { background: white; padding: 40px; border: 1px solid #ddd; max-width: 800px; margin: 0 auto; min-height: 600px; }
+        .report-header { border-bottom: 3px solid var(--primary); margin-bottom: 25px; padding-bottom: 10px; }
+        .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .m-card { border: 1px solid #e2e8f0; padding: 15px; text-align: center; border-radius: 4px; }
+        .m-card span { font-size: 10px; color: #64748b; font-weight: bold; display: block; margin-bottom: 5px; }
+        .m-card strong { font-size: 17px; color: var(--primary); }
+
+        /* Botões */
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        @media print {
+            body { padding: 0; background: white; }
+            .tab-nav, .filter-grid, #safety-bar, .btn, .tab-btn, h2, .table-wrap { display: none !important; }
+            .report-page { border: none; width: 100%; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="safety-bar" class="safe">✅ SISTEMA PRONTO PARA DISPAROS</div>
+
+    <div class="container">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('tab-import')">1. Importar CSV</button>
+            <button class="tab-btn" onclick="switchTab('tab-manage')">2. Gestão & Disparos</button>
+            <button class="tab-btn" onclick="switchTab('tab-report')">3. Relatório Executivo</button>
+        </div>
+
+        <div id="tab-import" class="tab-content active">
+            <h2>Configurar Campanha</h2>
+            <div style="margin-bottom: 15px;">
+                <label>Mensagem padrão (use [NOME] e [UNIDADE]):</label>
+                <textarea id="msg_template" rows="3">Olá [NOME], segue sua fatura da unidade [UNIDADE]. Podemos ajudar com o pagamento?</textarea>
+            </div>
+            
+            <div style="background: #f1f5f9; padding: 20px; border-radius: 10px; border: 2px dashed #cbd5e1; text-align: center;">
+                <input type="file" id="csv_file" accept=".csv" style="margin-bottom: 10px;">
+                <p style="font-size: 12px; color: #64748b;">O arquivo deve conter 5 colunas: ID; Nome; Telefone; Unidade; Tipo</p>
+            </div>
+            
+            <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Carregar e Sincronizar Nuvem</button>
+        </div>
+
+        <div id="tab-manage" class="tab-content">
+            <div class="filter-grid">
+                <div><label>Unidade:</label><select id="f_unidade" onchange="renderTable()"><option value="">Todas</option></select></div>
+                <div><label>Tipo:</label><select id="f_tipo" onchange="renderTable()"><option value="">Todos</option></select></div>
+                <div><label>Status:</label>
+                    <select id="f_status" onchange="renderTable()">
+                        <option value="">Todos</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Enviado">Enviado</option>
+                        <option value="Pago">Pago</option>
+                        <option value="Contato inválido">Inválido</option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button onclick="bulkDelete()" class="btn btn-danger">🗑️ Apagar Selecionados</button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onclick="toggleAll(this)"></th>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Unidade</th>
+                            <th>Disparo</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table_body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-report" class="tab-content">
+            <div class="filter-grid" style="background: white; border: 1px solid #e2e8f0;">
+                <div><label>Filtrar Unidade:</label><select id="rep_unidade" onchange="updateReport()"></select></div>
+                <div><label>Ticket Médio (R$):</label><input type="number" id="rep_ticket" value="70.00" onchange="updateReport()"></div>
+                <div style="display:flex; align-items:flex-end;"><button onclick="window.print()" class="btn btn-primary">🖨️ Gerar PDF</button></div>
+            </div>
+
+            <div class="report-page" id="report_area">
+                <div class="report-header">
+                    <h1 style="margin:0; color: var(--primary);">Smart Tools</h1>
+                    <p style="margin:5px 0; font-weight: bold;">RELATÓRIO FINANCEIRO EXECUTIVO</p>
+                </div>
+
+                <div id="rep_meta" style="font-size: 13px; margin-bottom: 20px;"></div>
+
+                <div class="metrics-row" id="rep_metrics"></div>
+
+                <div id="rep_text" style="font-size: 14px; line-height: 1.6; margin-bottom: 30px;"></div>
+
+                <h3 style="border-left: 4px solid var(--accent); padding-left: 10px; font-size: 16px;">Análise Probabilística (Grupo "Enviado")</h3>
+                <table style="width: 100%; margin-top: 15px; border: 1px solid #eee;">
+                    <thead>
+                        <tr style="background: #f8fafc;">
+                            <th>Cenário</th><th>Probabilidade</th><th>Conversão Est.</th><th>Receita Est.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rep_scenarios"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO FIREBASE (A sua oficial) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDiZQeKce5CUFGrY7UpkyZzBvem-5PFo1Y",
+            authDomain: "disparador-ddb0c.firebaseapp.com",
+            projectId: "disparador-ddb0c",
+            storageBucket: "disparador-ddb0c.firebasestorage.app",
+            messagingSenderId: "158046191374",
+            appId: "1:158046191374:web:80d6fb6888f64ded4de15f",
+            measurementId: "G-4JZPJ3YDFL"
+        };
+
+        // Inicialização
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let rawData = [];
+        let isLocked = false;
+
+        // --- TROCA DE ABAS ---
+        function switchTab(id) {
+            document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${id}')"]`).classList.add('active');
+            if(id !== 'tab-import') loadFromFirebase();
+        }
+
+        // --- PROCESSAMENTO DO CSV (BLINDADO) ---
+        function processCSV() {
+            const file = document.getElementById('csv_file').files[0];
+            const template = document.getElementById('msg_template').value;
+            if(!file) return alert("Selecione o arquivo CSV.");
+
+            const reader = new FileReader();
+            // Lendo como ISO-8859-1 para aceitar acentos do Excel (Gravatá, João...)
+            reader.readAsText(file, 'ISO-8859-1'); 
+            
+            reader.onload = function(e) {
+                const text = e.target.result;
+                // Divide linhas e remove o \r (carriage return) que o Excel insere
+                const lines = text.split(/\r?\n/); 
+                const batch = [];
+
+                lines.forEach((line, i) => {
+                    if(i === 0 || !line.trim()) return; // Pula cabeçalho ou linha vazia
+                    const c = line.split(';');
+                    if(c.length >= 5) {
+                        const id = c[0].trim();
+                        const nome = c[1].trim();
+                        const tel = c[2].replace(/\D/g,'');
+                        const unidade = c[3].trim();
+                        const tipo = c[4].trim();
+                        
+                        // Personaliza a mensagem
+                        const msgFinal = template.replace('[NOME]', nome).replace('[UNIDADE]', unidade);
+                        const link = `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msgFinal)}`;
+                        
+                        batch.push({
+                            id, nome, telefone: tel, unidade, tipo, status: 'Pendente',
+                            link: link, selected: false, timestamp: Date.now()
+                        });
+                    }
+                });
+
+                if(batch.length > 0) {
+                    saveToFirebase(batch);
+                } else {
+                    alert("Nenhum dado válido encontrado. O CSV deve usar ponto-e-vírgula (;)");
+                }
+            };
+        }
+
+        // --- SALVAR NO FIREBASE ---
+        async function saveToFirebase(data) {
+            const btn = document.querySelector('[onclick="processCSV()"]');
+            btn.innerText = "⏳ Sincronizando 0/" + data.length;
+            
+            let count = 0;
+            for (const item of data) {
+                await db.collection("contatos").doc(item.id).set(item);
+                count++;
+                if(count % 10 === 0) btn.innerText = `⏳ Sincronizando ${count}/${data.length}`;
+            }
+            
+            alert(`Sucesso! ${data.length} clientes carregados.`);
+            switchTab('tab-manage');
+        }
+
+        // --- CARREGAR DO FIREBASE ---
+        async function loadFromFirebase() {
+            const snap = await db.collection("contatos").orderBy("nome").get();
+            rawData = snap.docs.map(doc => doc.data());
+            
+            updateFiltersUI();
+            renderTable();
+            updateReport();
+        }
+
+        // --- ATUALIZAR INTERFACE ---
+        function updateFiltersUI() {
+            const unidades = [...new Set(rawData.map(i => i.unidade))].sort();
+            const tipos = [...new Set(rawData.map(i => i.tipo))].sort();
+
+            fillSelect('f_unidade', unidades, "Todas");
+            fillSelect('f_tipo', tipos, "Todos");
+            fillSelect('rep_unidade', unidades, null);
+        }
+
+        function fillSelect(id, list, firstOption) {
+            const el = document.getElementById(id);
+            const current = el.value;
+            el.innerHTML = firstOption ? `<option value="">${firstOption}</option>` : '';
+            list.forEach(item => { if(item) el.innerHTML += `<option value="${item}">${item}</option>`; });
+            if(current) el.value = current;
+        }
+
+        function renderTable() {
+            const fUni = document.getElementById('f_unidade').value;
+            const fTipo = document.getElementById('f_tipo').value;
+            const fStat = document.getElementById('f_status').value;
+
+            const filtered = rawData.filter(i => {
+                return (!fUni || i.unidade === fUni) && 
+                       (!fTipo || i.tipo === fTipo) && 
+                       (!fStat || i.status === fStat);
+            });
+
+            const tbody = document.getElementById('table_body');
+            tbody.innerHTML = '';
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = `status-${item.status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "")}`;
+                tr.innerHTML = `
+                    <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
+                    <td>${item.id}</td>
+                    <td><strong>${item.nome}</strong></td>
+                    <td>${item.unidade}</td>
+                    <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>
+                    <td>
+                        <select onchange="updateStatus('${item.id}', this.value)" style="padding:4px; font-size:11px;">
+                            <option value="Pendente" ${item.status==='Pendente'?'selected':''}>Pendente</option>
+                            <option value="Enviado" ${item.status==='Enviado'?'selected':''}>Enviado</option>
+                            <option value="Pago" ${item.status==='Pago'?'selected':''}>Pago</option>
+                            <option value="Contato inválido" ${item.status==='Contato inválido'?'selected':''}>Inválido</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- AÇÕES ---
+        async function updateStatus(id, newStatus) {
+            const index = rawData.findIndex(x => x.id === id);
+            if(index !== -1) {
+                rawData[index].status = newStatus;
+                await db.collection("contatos").doc(id).update({ status: newStatus });
+                renderTable();
+            }
+        }
+
+        function handleSend(id) {
+            if(isLocked) { event.preventDefault(); return alert("Aguarde a segurança!"); }
+            updateStatus(id, 'Enviado');
+            startSafetyTimer(20);
+        }
+
+        function startSafetyTimer(s) {
+            isLocked = true;
+            const bar = document.getElementById('safety-bar');
+            bar.className = 'locked';
+            let t = s;
+            const int = setInterval(() => {
+                bar.innerText = `⏳ AGUARDE ${t}s PARA O PRÓXIMO`;
+                t--;
+                if(t < 0) { clearInterval(int); isLocked = false; bar.className = 'safe'; bar.innerText = "✅ SISTEMA PRONTO PARA DISPAROS"; }
+            }, 1000);
+        }
+
+        function toggleSelect(id) { const i = rawData.find(x => x.id === id); if(i) i.selected = !i.selected; }
+        function toggleAll(source) { rawData.forEach(i => i.selected = source.checked); renderTable(); }
+
+        async function bulkDelete() {
+            if(!confirm("Excluir clientes selecionados permanentemente da nuvem?")) return;
+            const toDel = rawData.filter(x => x.selected);
+            for(const item of toDel) { await db.collection("contatos").doc(item.id).delete(); }
+            loadFromFirebase();
+        }
+
+        // --- RELATÓRIO EXECUTIVO (LÓGICA PDF) ---
+        function updateReport() {
+            const uni = document.getElementById('rep_unidade').value;
+            const ticket = parseFloat(document.getElementById('rep_ticket').value) || 0;
+            const data = rawData.filter(i => i.unidade === uni);
+
+            if(!data.length) { document.getElementById('report_area').style.opacity = '0.3'; return; }
+            document.getElementById('report_area').style.opacity = '1';
+
+            const total = data.length;
+            const pagos = data.filter(i => i.status === 'Pago').length;
+            const enviados = data.filter(i => i.status === 'Enviado').length;
+            const invalidos = data.filter(i => i.status === 'Contato inválido').length;
+            
+            const recRealizada = pagos * ticket;
+            const potencialTotal = total * ticket;
+            const conversao = ((pagos/total)*100).toFixed(1);
+
+            document.getElementById('rep_meta').innerHTML = `
+                Unidade: <strong>${uni}</strong> | Data: ${new Date().toLocaleDateString()} <br>
+                Responsável: Sistema SmartTools Pro
+            `;
+
+            document.getElementById('rep_metrics').innerHTML = `
+                <div class="m-card"><span>Rec. Realizada</span><strong>R$ ${recRealizada.toLocaleString('pt-br')}</strong></div>
+                <div class="m-card"><span>Potencial Total</span><strong>R$ ${potencialTotal.toLocaleString('pt-br')}</strong></div>
+                <div class="m-card"><span>Pagos/Total</span><strong>${pagos}/${total}</strong></div>
+                <div class="m-card"><span>Conversão</span><strong>${conversao}%</strong></div>
+            `;
+
+            document.getElementById('rep_text').innerHTML = `
+                A campanha na unidade <strong>${uni}</strong> abrangeu <strong>${total}</strong> clientes. 
+                O ticket médio aplicado foi de R$ ${ticket.toFixed(2)}. Atualmente, temos <strong>${pagos}</strong> pagamentos confirmados.
+                Identificamos <strong>${invalidos}</strong> registros inválidos, o que representa uma perda direta de R$ ${(invalidos*ticket).toLocaleString('pt-br')}.
+            `;
+
+            // Cenários baseados em "Enviado"
+            const cenarios = [
+                { nome: 'Otimista', prob: '80%', perc: 0.8 },
+                { nome: 'Conservador', prob: '50%', perc: 0.5 },
+                { nome: 'Pessimista', prob: '20%', perc: 0.2 }
+            ];
+
+            let html = '';
+            cenarios.forEach(s => {
+                const conv = Math.floor(enviados * s.perc);
+                const rec = conv * ticket;
+                html += `<tr><td>${s.nome}</td><td>${s.prob}</td><td>${conv}</td><td>R$ ${rec.toLocaleString('pt-br')}</td></tr>`;
+            });
+            document.getElementById('rep_scenarios').innerHTML = html;
+        }
+
+        window.onload = loadFromFirebase;
+    </script>
+</body>
+</html>
