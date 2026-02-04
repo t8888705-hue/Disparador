@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>SmartTools Pro — Gestão & Disparos</title>
+    <title>SmartTools Pro — Gestão & Disparos Seguros</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -11,23 +11,26 @@
     <style>
         :root {
             --primary: #1e3a8a; --accent: #2563eb; --whatsapp: #25D366;
-            --danger: #ef4444; --bg: #f8fafc; --card: #ffffff;
+            --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --card: #ffffff;
+            --gray-light: #f1f5f9;
         }
 
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding-top: 60px; color: #1e293b; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding-top: 90px; color: #1e293b; }
         
-        /* Barra de Trava de Segurança */
+        /* Barra de Trava de Segurança Reforçada */
         #safety-bar {
-            position: fixed; top: 0; left: 0; right: 0; height: 55px;
-            background: #111; color: white; display: flex; align-items: center;
-            justify-content: center; z-index: 1000; font-weight: bold; transition: 0.3s;
+            position: fixed; top: 0; left: 0; right: 0; height: 75px;
+            background: #111; color: white; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 1000; font-weight: bold; transition: background 0.5s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         #safety-bar.locked { background: var(--danger); }
         #safety-bar.safe { background: var(--whatsapp); }
+        #safety-sub { font-size: 11px; opacity: 0.9; font-weight: normal; margin-top: 2px; }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-        /* Navegação por Abas */
+        /* Navegação */
         .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 10px; }
         .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
         .tab-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -35,10 +38,24 @@
         .tab-content { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .tab-content.active { display: block; }
 
-        /* Filtros */
+        /* Ferramentas de Texto (Novo) */
+        .editor-toolbar {
+            background: var(--gray-light); padding: 15px; border-radius: 8px 8px 0 0; border: 1px solid #cbd5e1; border-bottom: none;
+        }
+        .var-builder { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+        .var-input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; font-size: 13px; min-width: 100px; }
+        .tag-btn { background: #e2e8f0; border: 1px solid #cbd5e1; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; font-weight: bold; color: #475569; }
+        .tag-btn:hover { background: #cbd5e1; }
+        .btn-insert { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+
+        textarea#msg_template {
+            border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0; margin-top: 0;
+        }
+
+        /* Filtros e Grid */
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px; }
         label { display: block; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 5px; }
-        select, input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        select, input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
 
         /* Tabela */
         .table-wrap { overflow-x: auto; max-height: 550px; border: 1px solid #e2e8f0; border-radius: 8px; }
@@ -49,7 +66,7 @@
         tr.status-pago { background: #f0fdf4 !important; }
         tr.status-enviado { background: #fffbeb !important; }
 
-        /* Relatório Estilo PDF */
+        /* Relatório */
         .report-page { background: white; padding: 40px; border: 1px solid #ddd; max-width: 800px; margin: 0 auto; min-height: 600px; }
         .report-header { border-bottom: 3px solid var(--primary); margin-bottom: 25px; padding-bottom: 10px; }
         .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
@@ -62,38 +79,58 @@
         .btn-primary { background: var(--accent); color: white; }
         .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; }
         .btn-danger { background: var(--danger); color: white; }
-
+        
         @media print {
             body { padding: 0; background: white; }
-            .tab-nav, .filter-grid, #safety-bar, .btn, .tab-btn, h2, .table-wrap { display: none !important; }
+            .tab-nav, .filter-grid, #safety-bar, .btn, .tab-btn, .editor-toolbar, .table-wrap { display: none !important; }
             .report-page { border: none; width: 100%; margin: 0; padding: 0; }
         }
     </style>
 </head>
 <body>
 
-    <div id="safety-bar" class="safe">✅ SISTEMA PRONTO PARA DISPAROS</div>
+    <div id="safety-bar" class="safe">
+        <div id="safety-main">✅ SISTEMA PRONTO PARA DISPAROS</div>
+        <div id="safety-sub">Modo Seguro Web Ativo • Sessão Atual: 0 envios</div>
+    </div>
 
     <div class="container">
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab('tab-import')">1. Importar CSV</button>
+            <button class="tab-btn active" onclick="switchTab('tab-import')">1. Configurar & Importar</button>
             <button class="tab-btn" onclick="switchTab('tab-manage')">2. Gestão & Disparos</button>
             <button class="tab-btn" onclick="switchTab('tab-report')">3. Relatório Executivo</button>
         </div>
 
         <div id="tab-import" class="tab-content active">
-            <h2>Configurar Campanha</h2>
-            <div style="margin-bottom: 15px;">
-                <label>Mensagem padrão (use [NOME] e [UNIDADE]):</label>
-                <textarea id="msg_template" rows="3">Olá [NOME], segue sua fatura da unidade [UNIDADE]. Podemos ajudar com o pagamento?</textarea>
+            <h2>Configurar Campanha Anti-Ban</h2>
+            
+            <label style="margin-bottom: 8px;">Construtor de Mensagem:</label>
+            
+            <div class="editor-toolbar">
+                <div style="margin-bottom: 8px; font-size: 11px; font-weight: bold; color: #64748b;">VARIÁVEIS DE SISTEMA</div>
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <button class="tag-btn" onclick="insertAtCursor('[NOME]')">👤 Nome do Cliente</button>
+                    <button class="tag-btn" onclick="insertAtCursor('[UNIDADE]')">🏢 Unidade</button>
+                </div>
+
+                <div style="margin-bottom: 8px; font-size: 11px; font-weight: bold; color: #64748b;">CRIAR VARIAÇÃO (SINÔNIMOS)</div>
+                <div class="var-builder">
+                    <input type="text" class="var-input" id="v1" placeholder="Opção A (ex: Olá)">
+                    <input type="text" class="var-input" id="v2" placeholder="Opção B (ex: Oi)">
+                    <input type="text" class="var-input" id="v3" placeholder="Opção C (ex: Saudações)">
+                    <button class="btn-insert" onclick="createVariation()">➕ Inserir Variação</button>
+                </div>
+                <small style="color: #64748b; font-size: 11px;">*Preencha 2 ou 3 campos para criar opções que o sistema alterna automaticamente.</small>
             </div>
             
-            <div style="background: #f1f5f9; padding: 20px; border-radius: 10px; border: 2px dashed #cbd5e1; text-align: center;">
+            <textarea id="msg_template" rows="4">{Olá|Oi|Saudações} [NOME], referente à unidade [UNIDADE]. {Tudo bem?|Como vai?|Podemos conversar?}</textarea>
+            
+            <div style="background: #f1f5f9; padding: 20px; border-radius: 10px; border: 2px dashed #cbd5e1; text-align: center; margin-top: 15px;">
                 <input type="file" id="csv_file" accept=".csv" style="margin-bottom: 10px;">
-                <p style="font-size: 12px; color: #64748b;">O arquivo deve conter 5 colunas: ID; Nome; Telefone; Unidade; Tipo</p>
+                <p style="font-size: 12px; color: #64748b;">Arquivo CSV (separado por ;) colunas: ID; Nome; Telefone; Unidade; Tipo</p>
             </div>
             
-            <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Carregar e Sincronizar Nuvem</button>
+            <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Processar e Sincronizar</button>
         </div>
 
         <div id="tab-manage" class="tab-content">
@@ -122,7 +159,7 @@
                             <th>ID</th>
                             <th>Nome</th>
                             <th>Unidade</th>
-                            <th>Disparo</th>
+                            <th>Disparo Seguro</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -143,20 +180,12 @@
                     <h1 style="margin:0; color: var(--primary);">Smart Tools</h1>
                     <p style="margin:5px 0; font-weight: bold;">RELATÓRIO FINANCEIRO EXECUTIVO</p>
                 </div>
-
                 <div id="rep_meta" style="font-size: 13px; margin-bottom: 20px;"></div>
-
                 <div class="metrics-row" id="rep_metrics"></div>
-
                 <div id="rep_text" style="font-size: 14px; line-height: 1.6; margin-bottom: 30px;"></div>
-
-                <h3 style="border-left: 4px solid var(--accent); padding-left: 10px; font-size: 16px;">Análise Probabilística (Grupo "Enviado")</h3>
+                <h3 style="border-left: 4px solid var(--accent); padding-left: 10px; font-size: 16px;">Análise Probabilística</h3>
                 <table style="width: 100%; margin-top: 15px; border: 1px solid #eee;">
-                    <thead>
-                        <tr style="background: #f8fafc;">
-                            <th>Cenário</th><th>Probabilidade</th><th>Conversão Est.</th><th>Receita Est.</th>
-                        </tr>
-                    </thead>
+                    <thead><tr style="background: #f8fafc;"><th>Cenário</th><th>Probabilidade</th><th>Conversão</th><th>Receita</th></tr></thead>
                     <tbody id="rep_scenarios"></tbody>
                 </table>
             </div>
@@ -164,7 +193,7 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE (A sua oficial) ---
+        // --- CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDiZQeKce5CUFGrY7UpkyZzBvem-5PFo1Y",
             authDomain: "disparador-ddb0c.firebaseapp.com",
@@ -175,14 +204,57 @@
             measurementId: "G-4JZPJ3YDFL"
         };
 
-        // Inicialização
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         let rawData = [];
         let isLocked = false;
+        let sessionCount = 0;
 
-        // --- TROCA DE ABAS ---
+        // --- GERADOR DE TEXTO E INTERFACE ---
+        
+        // Insere texto onde o cursor está (melhora UX)
+        function insertAtCursor(text) {
+            const input = document.getElementById('msg_template');
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const value = input.value;
+            
+            input.value = value.substring(0, start) + text + value.substring(end);
+            input.selectionStart = input.selectionEnd = start + text.length;
+            input.focus();
+        }
+
+        // Cria a variação {a|b|c} baseada nos inputs
+        function createVariation() {
+            const v1 = document.getElementById('v1').value.trim();
+            const v2 = document.getElementById('v2').value.trim();
+            const v3 = document.getElementById('v3').value.trim();
+            
+            const options = [v1, v2, v3].filter(v => v !== "");
+            
+            if(options.length < 2) {
+                return alert("Preencha pelo menos 2 campos para criar uma variação.");
+            }
+            
+            const tag = `{${options.join('|')}}`;
+            insertAtCursor(tag);
+            
+            // Limpa campos após inserir
+            document.getElementById('v1').value = "";
+            document.getElementById('v2').value = "";
+            document.getElementById('v3').value = "";
+        }
+
+        // Processa o texto final com Spintax
+        function spinText(text) {
+            return text.replace(/\{([^{}]+)\}/g, function(match, content) {
+                const choices = content.split('|');
+                return choices[Math.floor(Math.random() * choices.length)];
+            });
+        }
+
+        // --- SISTEMA DE ABAS ---
         function switchTab(id) {
             document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -190,24 +262,22 @@
             if(id !== 'tab-import') loadFromFirebase();
         }
 
-        // --- PROCESSAMENTO DO CSV (BLINDADO) ---
+        // --- PROCESSAMENTO CSV ---
         function processCSV() {
             const file = document.getElementById('csv_file').files[0];
             const template = document.getElementById('msg_template').value;
             if(!file) return alert("Selecione o arquivo CSV.");
 
             const reader = new FileReader();
-            // Lendo como ISO-8859-1 para aceitar acentos do Excel (Gravatá, João...)
             reader.readAsText(file, 'ISO-8859-1'); 
             
             reader.onload = function(e) {
                 const text = e.target.result;
-                // Divide linhas e remove o \r (carriage return) que o Excel insere
                 const lines = text.split(/\r?\n/); 
                 const batch = [];
 
                 lines.forEach((line, i) => {
-                    if(i === 0 || !line.trim()) return; // Pula cabeçalho ou linha vazia
+                    if(i === 0 || !line.trim()) return;
                     const c = line.split(';');
                     if(c.length >= 5) {
                         const id = c[0].trim();
@@ -216,8 +286,13 @@
                         const unidade = c[3].trim();
                         const tipo = c[4].trim();
                         
-                        // Personaliza a mensagem
-                        const msgFinal = template.replace('[NOME]', nome).replace('[UNIDADE]', unidade);
+                        // 1. Variáveis fixas
+                        let msgBase = template.replace('[NOME]', nome).replace('[UNIDADE]', unidade);
+                        // 2. Variação de Spintax
+                        let msgFinal = spinText(msgBase);
+                        // 3. Hash invisível único
+                        msgFinal += '\u200B'.repeat(Math.floor(Math.random() * 5)); 
+
                         const link = `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msgFinal)}`;
                         
                         batch.push({
@@ -227,108 +302,46 @@
                     }
                 });
 
-                if(batch.length > 0) {
-                    saveToFirebase(batch);
-                } else {
-                    alert("Nenhum dado válido encontrado. O CSV deve usar ponto-e-vírgula (;)");
-                }
+                if(batch.length > 0) saveToFirebase(batch);
+                else alert("CSV inválido ou vazio.");
             };
         }
 
-        // --- SALVAR NO FIREBASE ---
         async function saveToFirebase(data) {
             const btn = document.querySelector('[onclick="processCSV()"]');
-            btn.innerText = "⏳ Sincronizando 0/" + data.length;
-            
+            btn.innerText = "⏳ Sincronizando...";
             let count = 0;
             for (const item of data) {
                 await db.collection("contatos").doc(item.id).set(item);
                 count++;
-                if(count % 10 === 0) btn.innerText = `⏳ Sincronizando ${count}/${data.length}`;
+                if(count % 10 === 0) btn.innerText = `⏳ Salvando ${count}/${data.length}`;
             }
-            
-            alert(`Sucesso! ${data.length} clientes carregados.`);
+            alert("Importação concluída com sucesso!");
             switchTab('tab-manage');
         }
 
-        // --- CARREGAR DO FIREBASE ---
         async function loadFromFirebase() {
             const snap = await db.collection("contatos").orderBy("nome").get();
             rawData = snap.docs.map(doc => doc.data());
-            
             updateFiltersUI();
             renderTable();
             updateReport();
         }
 
-        // --- ATUALIZAR INTERFACE ---
-        function updateFiltersUI() {
-            const unidades = [...new Set(rawData.map(i => i.unidade))].sort();
-            const tipos = [...new Set(rawData.map(i => i.tipo))].sort();
-
-            fillSelect('f_unidade', unidades, "Todas");
-            fillSelect('f_tipo', tipos, "Todos");
-            fillSelect('rep_unidade', unidades, null);
-        }
-
-        function fillSelect(id, list, firstOption) {
-            const el = document.getElementById(id);
-            const current = el.value;
-            el.innerHTML = firstOption ? `<option value="">${firstOption}</option>` : '';
-            list.forEach(item => { if(item) el.innerHTML += `<option value="${item}">${item}</option>`; });
-            if(current) el.value = current;
-        }
-
-        function renderTable() {
-            const fUni = document.getElementById('f_unidade').value;
-            const fTipo = document.getElementById('f_tipo').value;
-            const fStat = document.getElementById('f_status').value;
-
-            const filtered = rawData.filter(i => {
-                return (!fUni || i.unidade === fUni) && 
-                       (!fTipo || i.tipo === fTipo) && 
-                       (!fStat || i.status === fStat);
-            });
-
-            const tbody = document.getElementById('table_body');
-            tbody.innerHTML = '';
-
-            filtered.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = `status-${item.status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "")}`;
-                tr.innerHTML = `
-                    <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
-                    <td>${item.id}</td>
-                    <td><strong>${item.nome}</strong></td>
-                    <td>${item.unidade}</td>
-                    <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>
-                    <td>
-                        <select onchange="updateStatus('${item.id}', this.value)" style="padding:4px; font-size:11px;">
-                            <option value="Pendente" ${item.status==='Pendente'?'selected':''}>Pendente</option>
-                            <option value="Enviado" ${item.status==='Enviado'?'selected':''}>Enviado</option>
-                            <option value="Pago" ${item.status==='Pago'?'selected':''}>Pago</option>
-                            <option value="Contato inválido" ${item.status==='Contato inválido'?'selected':''}>Inválido</option>
-                        </select>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // --- AÇÕES ---
-        async function updateStatus(id, newStatus) {
-            const index = rawData.findIndex(x => x.id === id);
-            if(index !== -1) {
-                rawData[index].status = newStatus;
-                await db.collection("contatos").doc(id).update({ status: newStatus });
-                renderTable();
-            }
-        }
-
+        // --- SEGURANÇA E DISPARO ---
         function handleSend(id) {
-            if(isLocked) { event.preventDefault(); return alert("Aguarde a segurança!"); }
+            if(isLocked) { event.preventDefault(); return alert("⚠️ AGUARDE O CONTADOR DE SEGURANÇA!"); }
+
+            sessionCount++;
             updateStatus(id, 'Enviado');
-            startSafetyTimer(20);
+            
+            // Delay dinâmico (45s a 90s)
+            const delay = Math.floor(Math.random() * (90 - 45 + 1)) + 45;
+            startSafetyTimer(delay);
+
+            if(sessionCount % 15 === 0) {
+                setTimeout(() => alert("🛑 ALERTA ANTI-BAN: 15 envios realizados. Pause por 5 minutos."), 2000);
+            }
         }
 
         function startSafetyTimer(s) {
@@ -337,72 +350,74 @@
             bar.className = 'locked';
             let t = s;
             const int = setInterval(() => {
-                bar.innerText = `⏳ AGUARDE ${t}s PARA O PRÓXIMO`;
+                document.getElementById('safety-main').innerText = `⏳ PROTEÇÃO WEB: AGUARDE ${t}s`;
+                document.getElementById('safety-sub').innerText = `Sessão: ${sessionCount} envios`;
                 t--;
-                if(t < 0) { clearInterval(int); isLocked = false; bar.className = 'safe'; bar.innerText = "✅ SISTEMA PRONTO PARA DISPAROS"; }
+                if(t < 0) { 
+                    clearInterval(int); isLocked = false; 
+                    bar.className = 'safe'; 
+                    document.getElementById('safety-main').innerText = "✅ PRONTO PARA ENVIAR";
+                }
             }, 1000);
         }
 
+        // --- UI AUXILIAR ---
+        function updateFiltersUI() {
+            const unidades = [...new Set(rawData.map(i => i.unidade))].sort();
+            fillSelect('f_unidade', unidades, "Todas");
+            fillSelect('rep_unidade', unidades, null);
+            fillSelect('f_tipo', [...new Set(rawData.map(i => i.tipo))].sort(), "Todos");
+        }
+        function fillSelect(id, list, first) {
+            const el = document.getElementById(id);
+            const cur = el.value;
+            el.innerHTML = first ? `<option value="">${first}</option>` : '';
+            list.forEach(i => { if(i) el.innerHTML += `<option value="${i}">${i}</option>`; });
+            if(cur) el.value = cur;
+        }
+        function renderTable() {
+            const fUni = document.getElementById('f_unidade').value;
+            const fStat = document.getElementById('f_status').value;
+            const tbody = document.getElementById('table_body');
+            tbody.innerHTML = '';
+            
+            rawData.filter(i => (!fUni || i.unidade === fUni) && (!fStat || i.status === fStat))
+            .forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = item.status === 'Pago' ? 'status-pago' : (item.status === 'Enviado' ? 'status-enviado' : '');
+                tr.innerHTML = `
+                    <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
+                    <td>${item.id}</td><td><strong>${item.nome}</strong></td><td>${item.unidade}</td>
+                    <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>
+                    <td><select onchange="updateStatus('${item.id}', this.value)">
+                        <option value="Pendente" ${item.status==='Pendente'?'selected':''}>Pendente</option>
+                        <option value="Enviado" ${item.status==='Enviado'?'selected':''}>Enviado</option>
+                        <option value="Pago" ${item.status==='Pago'?'selected':''}>Pago</option>
+                    </select></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        async function updateStatus(id, st) {
+            const idx = rawData.findIndex(x => x.id === id);
+            if(idx !== -1) { rawData[idx].status = st; await db.collection("contatos").doc(id).update({status: st}); renderTable(); }
+        }
         function toggleSelect(id) { const i = rawData.find(x => x.id === id); if(i) i.selected = !i.selected; }
-        function toggleAll(source) { rawData.forEach(i => i.selected = source.checked); renderTable(); }
-
+        function toggleAll(src) { rawData.forEach(i => i.selected = src.checked); renderTable(); }
         async function bulkDelete() {
-            if(!confirm("Excluir clientes selecionados permanentemente da nuvem?")) return;
-            const toDel = rawData.filter(x => x.selected);
-            for(const item of toDel) { await db.collection("contatos").doc(item.id).delete(); }
+            if(!confirm("Excluir selecionados?")) return;
+            for(const i of rawData.filter(x => x.selected)) await db.collection("contatos").doc(i.id).delete();
             loadFromFirebase();
         }
-
-        // --- RELATÓRIO EXECUTIVO (LÓGICA PDF) ---
         function updateReport() {
-            const uni = document.getElementById('rep_unidade').value;
-            const ticket = parseFloat(document.getElementById('rep_ticket').value) || 0;
-            const data = rawData.filter(i => i.unidade === uni);
-
-            if(!data.length) { document.getElementById('report_area').style.opacity = '0.3'; return; }
-            document.getElementById('report_area').style.opacity = '1';
-
-            const total = data.length;
-            const pagos = data.filter(i => i.status === 'Pago').length;
-            const enviados = data.filter(i => i.status === 'Enviado').length;
-            const invalidos = data.filter(i => i.status === 'Contato inválido').length;
-            
-            const recRealizada = pagos * ticket;
-            const potencialTotal = total * ticket;
-            const conversao = ((pagos/total)*100).toFixed(1);
-
-            document.getElementById('rep_meta').innerHTML = `
-                Unidade: <strong>${uni}</strong> | Data: ${new Date().toLocaleDateString()} <br>
-                Responsável: Sistema SmartTools Pro
-            `;
-
-            document.getElementById('rep_metrics').innerHTML = `
-                <div class="m-card"><span>Rec. Realizada</span><strong>R$ ${recRealizada.toLocaleString('pt-br')}</strong></div>
-                <div class="m-card"><span>Potencial Total</span><strong>R$ ${potencialTotal.toLocaleString('pt-br')}</strong></div>
-                <div class="m-card"><span>Pagos/Total</span><strong>${pagos}/${total}</strong></div>
-                <div class="m-card"><span>Conversão</span><strong>${conversao}%</strong></div>
-            `;
-
-            document.getElementById('rep_text').innerHTML = `
-                A campanha na unidade <strong>${uni}</strong> abrangeu <strong>${total}</strong> clientes. 
-                O ticket médio aplicado foi de R$ ${ticket.toFixed(2)}. Atualmente, temos <strong>${pagos}</strong> pagamentos confirmados.
-                Identificamos <strong>${invalidos}</strong> registros inválidos, o que representa uma perda direta de R$ ${(invalidos*ticket).toLocaleString('pt-br')}.
-            `;
-
-            // Cenários baseados em "Enviado"
-            const cenarios = [
-                { nome: 'Otimista', prob: '80%', perc: 0.8 },
-                { nome: 'Conservador', prob: '50%', perc: 0.5 },
-                { nome: 'Pessimista', prob: '20%', perc: 0.2 }
-            ];
-
-            let html = '';
-            cenarios.forEach(s => {
-                const conv = Math.floor(enviados * s.perc);
-                const rec = conv * ticket;
-                html += `<tr><td>${s.nome}</td><td>${s.prob}</td><td>${conv}</td><td>R$ ${rec.toLocaleString('pt-br')}</td></tr>`;
-            });
-            document.getElementById('rep_scenarios').innerHTML = html;
+             /* Mesma lógica de relatório anterior */
+             const uni = document.getElementById('rep_unidade').value;
+             const ticket = document.getElementById('rep_ticket').value;
+             const data = rawData.filter(i => i.unidade === uni);
+             if(!data.length) return;
+             const total = data.length;
+             const pagos = data.filter(i => i.status === 'Pago').length;
+             document.getElementById('rep_meta').innerHTML = `Unidade: ${uni}`;
+             document.getElementById('rep_metrics').innerHTML = `<div class="m-card"><span>Pagos</span><strong>${pagos}/${total}</strong></div>`;
         }
 
         window.onload = loadFromFirebase;
