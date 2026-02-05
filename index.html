@@ -131,7 +131,8 @@
                     <thead>
                         <tr>
                             <th width="30"><input type="checkbox" onclick="toggleAll(this)"></th>
-                            <th>RA / ID</th> <th>Nome</th>
+                            <th>RA / ID</th>
+                            <th>Nome</th>
                             <th>Unidade</th>
                             <th>Ação</th>
                             <th>Status Financeiro</th>
@@ -163,9 +164,9 @@
 
                 <div class="kpi-grid">
                     <div class="kpi-card"><span>Base (Leads)</span><strong id="kpi_leads">0</strong></div>
-                    <div class="kpi-card"><span>Contatados</span><strong id="kpi_contatos">0</strong></div>
-                    <div class="kpi-card"><span>Pagos (Matrículas)</span><strong id="kpi_vendas" style="color: var(--whatsapp);">0</strong></div>
-                    <div class="kpi-card"><span>Faturamento</span><strong id="kpi_faturamento" style="color: var(--primary);">R$ 0,00</strong></div>
+                    <div class="kpi-card"><span>Boletos Enviados</span><strong id="kpi_contatos">0</strong></div>
+                    <div class="kpi-card"><span>Pagos (Qtd)</span><strong id="kpi_vendas" style="color: var(--whatsapp);">0</strong></div>
+                    <div class="kpi-card"><span>Receita Realizada</span><strong id="kpi_faturamento" style="color: var(--primary);">R$ 0,00</strong></div>
                 </div>
 
                 <div class="section-title">Performance de Funil</div>
@@ -173,14 +174,15 @@
                     <thead><tr><th>Etapa</th><th>Qtd</th><th>%</th><th>Visual</th></tr></thead>
                     <tbody>
                         <tr><td>Base Total</td><td id="funnel_total">0</td><td>100%</td><td><div class="progress-bar"><div class="progress-fill" style="width:100%; background:#cbd5e1;"></div></div></td></tr>
-                        <tr><td>Enviados</td><td id="funnel_env">0</td><td id="funnel_env_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_env" style="width:0%; background:var(--accent);"></div></div></td></tr>
-                        <tr><td>Pagos</td><td id="funnel_pago">0</td><td id="funnel_pago_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_pago" style="width:0%; background:var(--whatsapp);"></div></div></td></tr>
+                        <tr><td>Boletos Enviados</td><td id="funnel_env">0</td><td id="funnel_env_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_env" style="width:0%; background:var(--accent);"></div></div></td></tr>
+                        <tr><td>Pagos Confirmados</td><td id="funnel_pago">0</td><td id="funnel_pago_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_pago" style="width:0%; background:var(--whatsapp);"></div></div></td></tr>
                     </tbody>
                 </table>
 
-                <div class="section-title">Projeção Financeira (Cenários)</div>
+                <div class="section-title">Previsão de Fechamento (Soma Pagos + Projeção)</div>
+                <p style="font-size:11px; color:#64748b; margin-top:-5px;">*Cálculo: (Receita Realizada) + (Projeção sobre Boletos em Aberto)</p>
                 <table class="rep-table">
-                    <thead><tr><th>Cenário</th><th>Taxa Conv.</th><th>Novas Vendas</th><th>Receita Prevista</th></tr></thead>
+                    <thead><tr><th>Cenário</th><th>Taxa Aplicada</th><th>Novas Vendas (Est.)</th><th>Receita Total (Prevista)</th></tr></thead>
                     <tbody id="scenario_body"></tbody>
                 </table>
 
@@ -241,7 +243,7 @@
                         msg = spinText(msg) + '\u200B'.repeat(Math.floor(Math.random()*5));
                         
                         batch.push({
-                            id: c[0].trim(), // AQUI ESTÁ O RA/ID
+                            id: c[0].trim(),
                             nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), tipo: c[4].trim(),
                             status: 'Pendente', link: `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msg)}`,
                             selected: false, timestamp: Date.now()
@@ -270,7 +272,6 @@
             const snap = await db.collection("contatos").get();
             rawData = snap.docs.map(doc => doc.data());
             
-            // Filtros UI
             const units = [...new Set(rawData.map(i => i.unidade))].sort();
             const popSelect = (id, list) => {
                 const el = document.getElementById(id);
@@ -286,11 +287,11 @@
             updateReport();
         }
 
-        // --- GESTÃO COM RA ---
+        // --- GESTÃO ---
         function renderTable() {
             const fUni = document.getElementById('f_unidade').value;
             const fStat = document.getElementById('f_status').value;
-            const search = document.getElementById('search_term').value.toLowerCase(); // Busca
+            const search = document.getElementById('search_term').value.toLowerCase();
             
             const tbody = document.getElementById('table_body');
             tbody.innerHTML = '';
@@ -298,14 +299,12 @@
             rawData.filter(i => {
                 const matchUni = !fUni || i.unidade === fUni;
                 const matchStat = !fStat || i.status === fStat;
-                // Busca por RA (id) ou Nome
                 const matchSearch = !search || i.nome.toLowerCase().includes(search) || i.id.toLowerCase().includes(search);
                 return matchUni && matchStat && matchSearch;
             })
             .forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = item.status === 'Pago' ? 'status-pago' : (item.status === 'Enviado' ? 'status-enviado' : '');
-                // INSERINDO COLUNA RA (ID)
                 tr.innerHTML = `
                     <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
                     <td><strong>${item.id}</strong></td>
@@ -351,7 +350,7 @@
             loadFromFirebase();
         }
 
-        // --- RELATÓRIO PDF ---
+        // --- LÓGICA DO RELATÓRIO CORRIGIDA ---
         function updateReport() {
             const uni = document.getElementById('rep_unidade').value;
             const ticketVal = parseFloat(document.getElementById('rep_ticket').value) || 0;
@@ -360,39 +359,74 @@
             const total = data.length;
             if(total === 0) return;
 
-            const enviados = data.filter(i => i.status === 'Enviado' || i.status === 'Pago').length;
-            const pagos = data.filter(i => i.status === 'Pago').length;
-            const faturamento = pagos * ticketVal;
-            const convRate = enviados > 0 ? (pagos/enviados)*100 : 0;
-            const pendentes = total - enviados;
+            // Contagem
+            const qtdPagos = data.filter(i => i.status === 'Pago').length;
+            const qtdEnviados = data.filter(i => i.status === 'Enviado').length;
+            const qtdPendentes = data.filter(i => i.status === 'Pendente').length;
 
+            // 1. Receita Realizada (Já no bolso)
+            const receitaRealizada = qtdPagos * ticketVal;
+
+            // 2. Taxa de Conversão Real (Baseada em quem foi abordado)
+            // Consideramos abordados a soma de Pagos + Enviados (quem recebeu link)
+            const totalAbordados = qtdPagos + qtdEnviados;
+            const taxaConversao = totalAbordados > 0 ? (qtdPagos / totalAbordados) : 0; 
+            const taxaPerc = taxaConversao * 100;
+
+            // 3. Base para Projeção (Ouro na mesa)
+            // Calculamos sobre Enviados (que estão com link) + Pendentes (que vão receber)
+            // Essa é a "Base de Receita nos Boletos Enviados/A Enviar"
+            const leadsEmAberto = qtdEnviados + qtdPendentes;
+
+            // Formatação
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+            // Atualiza KPI Cards
             document.getElementById('rep_date').innerText = new Date().toLocaleDateString('pt-BR');
             document.getElementById('rep_unit_display').innerText = uni ? uni.toUpperCase() : "GERAL";
             document.getElementById('kpi_leads').innerText = total;
-            document.getElementById('kpi_contatos').innerText = enviados;
-            document.getElementById('kpi_vendas').innerText = pagos;
-            document.getElementById('kpi_faturamento').innerText = fmt(faturamento);
+            document.getElementById('kpi_contatos').innerText = qtdEnviados; // Exibe quantos estão "na rua" aguardando pgto
+            document.getElementById('kpi_vendas').innerText = qtdPagos;
+            document.getElementById('kpi_faturamento').innerText = fmt(receitaRealizada);
 
+            // Funil Visual
+            const envTotal = qtdEnviados + qtdPagos; // Enviados totais (incluindo quem pagou)
             document.getElementById('funnel_total').innerText = total;
-            document.getElementById('funnel_env').innerText = enviados;
-            document.getElementById('funnel_env_perc').innerText = ((enviados/total)*100).toFixed(1) + "%";
-            document.getElementById('bar_env').style.width = ((enviados/total)*100) + "%";
-            document.getElementById('funnel_pago').innerText = pagos;
-            document.getElementById('funnel_pago_perc').innerText = ((pagos/total)*100).toFixed(1) + "%";
-            document.getElementById('bar_pago').style.width = ((pagos/total)*100) + "%";
+            document.getElementById('funnel_env').innerText = envTotal;
+            document.getElementById('funnel_env_perc').innerText = ((envTotal/total)*100).toFixed(1) + "%";
+            document.getElementById('bar_env').style.width = ((envTotal/total)*100) + "%";
+            document.getElementById('funnel_pago').innerText = qtdPagos;
+            document.getElementById('funnel_pago_perc').innerText = ((qtdPagos/total)*100).toFixed(1) + "%";
+            document.getElementById('bar_pago').style.width = ((qtdPagos/total)*100) + "%";
 
-            // Cenários
-            const baseRate = convRate || 1.0; 
+            // Tabela de Projeção (SOMA DOS PAGOS + EXPECTATIVA DOS ENVIADOS/PENDENTES)
             const sBody = document.getElementById('scenario_body');
             sBody.innerHTML = '';
             
-            [{n:"Pessimista",r: baseRate*0.5}, {n:"Realista",r: baseRate}, {n:"Otimista",r: baseRate*1.5}]
-            .forEach(s => {
-                const novas = Math.floor(pendentes * (s.r/100));
-                const recTotal = faturamento + (novas * ticketVal);
-                sBody.innerHTML += `<tr><td>${s.n}</td><td>${s.r.toFixed(1)}%</td><td>+${novas}</td><td style="font-weight:bold; color:var(--primary);">${fmt(recTotal)}</td></tr>`;
+            // Se não tiver conversão ainda, usamos 1% como base de simulação
+            const baseRate = taxaConversao > 0 ? taxaConversao : 0.01;
+
+            const cenarios = [
+                { nome: "Pessimista (Baixa)", fator: 0.8 }, // 80% da taxa atual
+                { nome: "Realista (Atual)", fator: 1.0 },   // 100% da taxa atual
+                { nome: "Otimista (Alta)", fator: 1.2 }     // 120% da taxa atual
+            ];
+
+            cenarios.forEach(cen => {
+                const taxaCenario = baseRate * cen.fator;
+                // Quantos mais vão pagar baseado nos que estão em aberto?
+                const novasVendasEst = Math.floor(leadsEmAberto * taxaCenario);
+                const receitaExtra = novasVendasEst * ticketVal;
+                const receitaFinalPrevista = receitaRealizada + receitaExtra;
+
+                sBody.innerHTML += `
+                    <tr>
+                        <td><strong>${cen.nome}</strong></td>
+                        <td>${(taxaCenario * 100).toFixed(1)}%</td>
+                        <td>+${novasVendasEst} boletos</td>
+                        <td style="font-weight:bold; color:var(--primary);">${fmt(receitaFinalPrevista)}</td>
+                    </tr>
+                `;
             });
         }
         window.onload = loadFromFirebase;
