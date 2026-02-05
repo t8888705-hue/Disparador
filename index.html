@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>SmartTools Pro — Gestão & Relatórios</title>
+    <title>SmartTools Pro — Gestão Acadêmica</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -56,45 +56,32 @@
         tr.status-pago { background: #f0fdf4 !important; }
         tr.status-enviado { background: #fffbeb !important; }
 
-        /* --- RELATÓRIO EXECUTIVO (CSS ESPECÍFICO) --- */
+        /* RELATÓRIO PDF */
         .report-page { 
             background: white; width: 100%; max-width: 210mm; min-height: 297mm; margin: 0 auto; 
             padding: 40px; box-sizing: border-box; border: 1px solid #ddd; position: relative;
         }
-        
         .rep-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
-        .rep-logo h1 { margin: 0; color: var(--primary); font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-        .rep-logo span { font-size: 12px; color: #64748b; letter-spacing: 2px; text-transform: uppercase; }
+        .rep-logo h1 { margin: 0; color: var(--primary); font-size: 24px; text-transform: uppercase; }
         .rep-meta { text-align: right; font-size: 12px; color: #64748b; }
-        .rep-meta strong { color: #000; font-size: 14px; display: block; margin-bottom: 2px; }
-
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
         .kpi-card { border: 1px solid var(--border); padding: 15px; border-radius: 6px; text-align: center; background: #fff; }
-        .kpi-card span { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; display: block; margin-bottom: 5px; }
         .kpi-card strong { font-size: 20px; color: var(--primary); display: block; }
-        .kpi-card small { font-size: 11px; color: var(--whatsapp); font-weight: bold; }
-
         .section-title { background: #f1f5f9; padding: 8px 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #475569; margin: 20px 0 10px 0; border-left: 4px solid var(--accent); }
-
         .rep-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-        .rep-table th { background: var(--primary); color: white; padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
-        .rep-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }
-        .rep-table tr:nth-child(even) { background: #f8fafc; }
-        
-        .progress-bar { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; width: 100%; }
+        .rep-table th { background: var(--primary); color: white; padding: 8px; }
+        .rep-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        .footer { position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; }
+        .progress-bar { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; width: 100%; }
         .progress-fill { height: 100%; background: var(--accent); }
 
-        .footer { position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; }
-
-        /* CONFIGURAÇÃO DE IMPRESSÃO */
         @media print {
             body { padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             #safety-bar, .tab-nav, .filter-input-area, .no-print { display: none !important; }
             .container { max-width: 100%; margin: 0; padding: 0; }
-            .tab-content { padding: 0; border: none; shadow: none; display: none; }
+            .tab-content { display: none; }
             #tab-report { display: block !important; }
-            .report-page { border: none; width: 100%; margin: 0; padding: 20px; max-width: 100%; min-height: auto; }
-            .kpi-card, .section-title, th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .report-page { border: none; padding: 20px; margin: 0; }
         }
     </style>
 </head>
@@ -113,21 +100,22 @@
         </div>
 
         <div id="tab-import" class="tab-content active">
-            <h2>Configurar Campanha Anti-Ban</h2>
+            <h2>Configurar Campanha</h2>
             <div class="editor-toolbar">
-                <small style="font-weight: bold; color: #64748b;">VARIÁVEIS: [NOME] [UNIDADE] • Use {Olá|Oi} para variar.</small>
+                <small style="font-weight: bold; color: #64748b;">Use: [NOME] [UNIDADE] e {Oi|Olá} para variar.</small>
             </div>
-            <textarea id="msg_template" placeholder="Digite sua mensagem aqui...">{Olá|Oi} [NOME], somos da [UNIDADE]. {Tudo bem?|Podemos falar?}</textarea>
+            <textarea id="msg_template" placeholder="Digite sua mensagem...">{Olá|Oi} [NOME], referente à matrícula na unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
             
             <div style="background: #f8fafc; padding: 20px; margin-top: 15px; border: 2px dashed #cbd5e1; text-align: center;">
                 <input type="file" id="csv_file" accept=".csv">
-                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: ID; Nome; Telefone; Unidade; Tipo</p>
+                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA/ID; Nome; Telefone; Unidade; Tipo</p>
             </div>
             <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Processar e Sincronizar</button>
         </div>
 
         <div id="tab-manage" class="tab-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="search_term" placeholder="🔍 Buscar Nome ou RA..." onkeyup="renderTable()">
                 <select id="f_unidade" onchange="renderTable()"><option value="">Todas Unidades</option></select>
                 <select id="f_status" onchange="renderTable()">
                     <option value="">Todos Status</option>
@@ -143,7 +131,7 @@
                     <thead>
                         <tr>
                             <th width="30"><input type="checkbox" onclick="toggleAll(this)"></th>
-                            <th>Nome</th>
+                            <th>RA / ID</th> <th>Nome</th>
                             <th>Unidade</th>
                             <th>Ação</th>
                             <th>Status Financeiro</th>
@@ -157,102 +145,51 @@
         <div id="tab-report" class="tab-content">
             <div class="filter-input-area no-print" style="background: #f8fafc; padding: 20px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; gap: 15px; align-items: flex-end;">
                 <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: bold; text-transform: uppercase;">Selecionar Unidade</label>
+                    <label style="font-size: 11px; font-weight: bold;">Unidade</label>
                     <select id="rep_unidade" onchange="updateReport()"></select>
                 </div>
                 <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: bold; text-transform: uppercase;">Ticket Médio (R$)</label>
-                    <input type="number" id="rep_ticket" value="99.90" onchange="updateReport()">
+                    <label style="font-size: 11px; font-weight: bold;">Ticket Médio (R$)</label>
+                    <input type="number" id="rep_ticket" value="100.00" onchange="updateReport()">
                 </div>
-                <button onclick="window.print()" class="btn btn-primary">🖨️ Baixar PDF / Imprimir</button>
+                <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir Relatório</button>
             </div>
 
             <div class="report-page">
                 <div class="rep-header">
-                    <div class="rep-logo">
-                        <h1>Smart Tools Pro</h1>
-                        <span>Relatório de Performance</span>
-                    </div>
-                    <div class="rep-meta">
-                        <span id="rep_date">Data: --/--/----</span>
-                        <strong id="rep_unit_display">UNIDADE: GERAL</strong>
-                    </div>
+                    <div class="rep-logo"><h1>Smart Tools Acadêmico</h1><span>Relatório Financeiro</span></div>
+                    <div class="rep-meta"><span id="rep_date">--/--/----</span><strong id="rep_unit_display">GERAL</strong></div>
                 </div>
 
                 <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <span>Base Total (Leads)</span>
-                        <strong id="kpi_leads">0</strong>
-                    </div>
-                    <div class="kpi-card">
-                        <span>Contatos Realizados</span>
-                        <strong id="kpi_contatos">0</strong>
-                        <small id="kpi_perc_contato">0% da base</small>
-                    </div>
-                    <div class="kpi-card">
-                        <span>Vendas (Pagos)</span>
-                        <strong id="kpi_vendas" style="color: var(--whatsapp);">0</strong>
-                        <small id="kpi_conversao">0% Conv.</small>
-                    </div>
-                    <div class="kpi-card">
-                        <span>Faturamento Atual</span>
-                        <strong id="kpi_faturamento" style="color: var(--primary);">R$ 0,00</strong>
-                    </div>
+                    <div class="kpi-card"><span>Base (Leads)</span><strong id="kpi_leads">0</strong></div>
+                    <div class="kpi-card"><span>Contatados</span><strong id="kpi_contatos">0</strong></div>
+                    <div class="kpi-card"><span>Pagos (Matrículas)</span><strong id="kpi_vendas" style="color: var(--whatsapp);">0</strong></div>
+                    <div class="kpi-card"><span>Faturamento</span><strong id="kpi_faturamento" style="color: var(--primary);">R$ 0,00</strong></div>
                 </div>
 
-                <div class="section-title">Análise de Funil & Eficiência</div>
+                <div class="section-title">Performance de Funil</div>
                 <table class="rep-table">
-                    <thead><tr><th>Etapa do Funil</th><th>Quantidade</th><th>Representatividade</th><th>Visual</th></tr></thead>
+                    <thead><tr><th>Etapa</th><th>Qtd</th><th>%</th><th>Visual</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td>1. Base Carregada</td>
-                            <td id="funnel_total">0</td>
-                            <td>100%</td>
-                            <td><div class="progress-bar"><div class="progress-fill" style="width: 100%; background: #94a3b8;"></div></div></td>
-                        </tr>
-                        <tr>
-                            <td>2. Abordados (Enviados)</td>
-                            <td id="funnel_env">0</td>
-                            <td id="funnel_env_perc">0%</td>
-                            <td><div class="progress-bar"><div class="progress-fill" id="bar_env" style="width: 0%; background: var(--accent);"></div></div></td>
-                        </tr>
-                        <tr>
-                            <td>3. Convertidos (Pagos)</td>
-                            <td id="funnel_pago">0</td>
-                            <td id="funnel_pago_perc">0%</td>
-                            <td><div class="progress-bar"><div class="progress-fill" id="bar_pago" style="width: 0%; background: var(--whatsapp);"></div></div></td>
-                        </tr>
+                        <tr><td>Base Total</td><td id="funnel_total">0</td><td>100%</td><td><div class="progress-bar"><div class="progress-fill" style="width:100%; background:#cbd5e1;"></div></div></td></tr>
+                        <tr><td>Enviados</td><td id="funnel_env">0</td><td id="funnel_env_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_env" style="width:0%; background:var(--accent);"></div></div></td></tr>
+                        <tr><td>Pagos</td><td id="funnel_pago">0</td><td id="funnel_pago_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_pago" style="width:0%; background:var(--whatsapp);"></div></div></td></tr>
                     </tbody>
                 </table>
 
-                <div class="section-title">Cenários de Faturamento (Projeção)</div>
-                <p style="font-size: 12px; margin-bottom: 10px; color: #64748b;">
-                    *Cálculo baseado no Ticket Médio de <b id="txt_ticket">R$ 0,00</b> aplicado sobre os leads pendentes.
-                </p>
+                <div class="section-title">Projeção Financeira (Cenários)</div>
                 <table class="rep-table">
-                    <thead>
-                        <tr>
-                            <th>Cenário</th>
-                            <th>Taxa Estimada</th>
-                            <th>Novas Vendas (Est.)</th>
-                            <th>Receita Adicional</th>
-                            <th>Receita Total (Prevista)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scenario_body">
-                        </tbody>
+                    <thead><tr><th>Cenário</th><th>Taxa Conv.</th><th>Novas Vendas</th><th>Receita Prevista</th></tr></thead>
+                    <tbody id="scenario_body"></tbody>
                 </table>
 
-                <div class="footer">
-                    <span>Gerado por SmartTools System</span>
-                    <span>Documento Confidencial</span>
-                </div>
+                <div class="footer"><span>Gerado via SmartTools System</span><span>Confidencial</span></div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIG FIREBASE (MANTIDA IGUAL) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDiZQeKce5CUFGrY7UpkyZzBvem-5PFo1Y",
             authDomain: "disparador-ddb0c.firebaseapp.com",
@@ -269,7 +206,6 @@
         let isLocked = false;
         let sessionCount = 0;
 
-        // --- SISTEMA ---
         function switchTab(id) {
             document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -288,7 +224,7 @@
         function processCSV() {
             const file = document.getElementById('csv_file').files[0];
             const template = document.getElementById('msg_template').value;
-            if(!file) return alert("Selecione o arquivo CSV.");
+            if(!file) return alert("Selecione o CSV.");
 
             const reader = new FileReader();
             reader.readAsText(file, 'ISO-8859-1'); 
@@ -305,7 +241,8 @@
                         msg = spinText(msg) + '\u200B'.repeat(Math.floor(Math.random()*5));
                         
                         batch.push({
-                            id: c[0].trim(), nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), tipo: c[4].trim(),
+                            id: c[0].trim(), // AQUI ESTÁ O RA/ID
+                            nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), tipo: c[4].trim(),
                             status: 'Pendente', link: `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msg)}`,
                             selected: false, timestamp: Date.now()
                         });
@@ -322,7 +259,7 @@
             for (const item of data) {
                 await db.collection("contatos").doc(item.id).set(item);
                 c++;
-                if(c % 20 === 0) btn.innerText = `Salvo: ${c}/${data.length}`;
+                if(c % 20 === 0) btn.innerText = `Salvando: ${c}/${data.length}`;
             }
             alert("Sucesso!");
             btn.innerText = "🚀 Processar e Sincronizar";
@@ -333,12 +270,12 @@
             const snap = await db.collection("contatos").get();
             rawData = snap.docs.map(doc => doc.data());
             
-            // Popula filtros
+            // Filtros UI
             const units = [...new Set(rawData.map(i => i.unidade))].sort();
             const popSelect = (id, list) => {
                 const el = document.getElementById(id);
                 const val = el.value;
-                el.innerHTML = '<option value="">Todas / Geral</option>';
+                el.innerHTML = '<option value="">Todas</option>';
                 list.forEach(u => el.innerHTML += `<option value="${u}">${u}</option>`);
                 el.value = val;
             };
@@ -349,23 +286,33 @@
             updateReport();
         }
 
-        // --- GESTÃO ---
+        // --- GESTÃO COM RA ---
         function renderTable() {
             const fUni = document.getElementById('f_unidade').value;
             const fStat = document.getElementById('f_status').value;
+            const search = document.getElementById('search_term').value.toLowerCase(); // Busca
+            
             const tbody = document.getElementById('table_body');
             tbody.innerHTML = '';
             
-            rawData.filter(i => (!fUni || i.unidade === fUni) && (!fStat || i.status === fStat))
+            rawData.filter(i => {
+                const matchUni = !fUni || i.unidade === fUni;
+                const matchStat = !fStat || i.status === fStat;
+                // Busca por RA (id) ou Nome
+                const matchSearch = !search || i.nome.toLowerCase().includes(search) || i.id.toLowerCase().includes(search);
+                return matchUni && matchStat && matchSearch;
+            })
             .forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = item.status === 'Pago' ? 'status-pago' : (item.status === 'Enviado' ? 'status-enviado' : '');
+                // INSERINDO COLUNA RA (ID)
                 tr.innerHTML = `
                     <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
+                    <td><strong>${item.id}</strong></td>
                     <td>${item.nome}</td>
                     <td>${item.unidade}</td>
                     <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>
-                    <td><select onchange="updateStatus('${item.id}', this.value)" style="padding:5px; height:auto;">
+                    <td><select onchange="updateStatus('${item.id}', this.value)" style="padding:5px;">
                         <option value="Pendente" ${item.status==='Pendente'?'selected':''}>Pendente</option>
                         <option value="Enviado" ${item.status==='Enviado'?'selected':''}>Enviado</option>
                         <option value="Pago" ${item.status==='Pago'?'selected':''}>💰 Pago</option>
@@ -376,123 +323,78 @@
 
         async function updateStatus(id, st) {
             const idx = rawData.findIndex(x => x.id === id);
-            if(idx !== -1) { 
-                rawData[idx].status = st; 
-                await db.collection("contatos").doc(id).update({status: st}); 
-                renderTable(); 
-                updateReport(); // Atualiza relatório em tempo real
-            }
+            if(idx !== -1) { rawData[idx].status = st; await db.collection("contatos").doc(id).update({status: st}); renderTable(); updateReport(); }
         }
 
         function handleSend(id) {
-            if(isLocked) { event.preventDefault(); return alert("Aguarde o timer de segurança!"); }
+            if(isLocked) { event.preventDefault(); return alert("Aguarde a segurança!"); }
             sessionCount++;
             updateStatus(id, 'Enviado');
-            
-            // Lógica Anti-Ban
             isLocked = true;
             const bar = document.getElementById('safety-bar');
             bar.className = 'locked';
-            let t = Math.floor(Math.random() * (60 - 30 + 1)) + 30; // 30 a 60s
-            
+            let t = Math.floor(Math.random() * (60 - 30 + 1)) + 30;
             const int = setInterval(() => {
-                document.getElementById('safety-main').innerText = `⏳ AGUARDE ${t}s PARA PRÓXIMO ENVIO`;
+                document.getElementById('safety-main').innerText = `⏳ AGUARDE ${t}s`;
                 document.getElementById('safety-sub').innerText = `Sessão: ${sessionCount}`;
                 t--;
-                if(t < 0) { 
-                    clearInterval(int); isLocked = false; bar.className = 'safe'; 
-                    document.getElementById('safety-main').innerText = "✅ SISTEMA PRONTO";
-                }
+                if(t < 0) { clearInterval(int); isLocked = false; bar.className = 'safe'; document.getElementById('safety-main').innerText = "✅ PRONTO"; }
             }, 1000);
         }
 
         function toggleSelect(id) { const i = rawData.find(x => x.id === id); if(i) i.selected = !i.selected; }
         function toggleAll(src) { rawData.forEach(i => i.selected = src.checked); renderTable(); }
         async function bulkDelete() {
-            if(!confirm("Tem certeza?")) return;
+            if(!confirm("Excluir selecionados?")) return;
             const sel = rawData.filter(x => x.selected);
             for(const i of sel) await db.collection("contatos").doc(i.id).delete();
             loadFromFirebase();
         }
 
-        // --- LÓGICA DO RELATÓRIO FINANCEIRO (PDF) ---
+        // --- RELATÓRIO PDF ---
         function updateReport() {
             const uni = document.getElementById('rep_unidade').value;
             const ticketVal = parseFloat(document.getElementById('rep_ticket').value) || 0;
-            
-            // Filtra Dados
             const data = uni ? rawData.filter(i => i.unidade === uni) : rawData;
             
             const total = data.length;
-            if(total === 0) return; // Evita erros se vazio
+            if(total === 0) return;
 
             const enviados = data.filter(i => i.status === 'Enviado' || i.status === 'Pago').length;
             const pagos = data.filter(i => i.status === 'Pago').length;
-            const pendentes = total - enviados; // Consideramos pendentes quem ainda não recebeu msg ou não pagou
-
-            // Cálculos
-            const convRate = enviados > 0 ? (pagos / enviados) * 100 : 0;
             const faturamento = pagos * ticketVal;
+            const convRate = enviados > 0 ? (pagos/enviados)*100 : 0;
+            const pendentes = total - enviados;
 
-            // Formatação Moeda
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            // Atualiza UI Header e KPIs
             document.getElementById('rep_date').innerText = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('rep_unit_display').innerText = uni ? `UNIDADE: ${uni.toUpperCase()}` : "UNIDADE: GERAL (CONSOLIDADO)";
-            
+            document.getElementById('rep_unit_display').innerText = uni ? uni.toUpperCase() : "GERAL";
             document.getElementById('kpi_leads').innerText = total;
             document.getElementById('kpi_contatos').innerText = enviados;
-            document.getElementById('kpi_perc_contato').innerText = ((enviados/total)*100).toFixed(1) + "% da base";
             document.getElementById('kpi_vendas').innerText = pagos;
-            document.getElementById('kpi_conversao').innerText = convRate.toFixed(1) + "% Conv.";
             document.getElementById('kpi_faturamento').innerText = fmt(faturamento);
-            document.getElementById('txt_ticket').innerText = fmt(ticketVal);
 
-            // Atualiza Funil
             document.getElementById('funnel_total').innerText = total;
             document.getElementById('funnel_env').innerText = enviados;
             document.getElementById('funnel_env_perc').innerText = ((enviados/total)*100).toFixed(1) + "%";
             document.getElementById('bar_env').style.width = ((enviados/total)*100) + "%";
-
             document.getElementById('funnel_pago').innerText = pagos;
             document.getElementById('funnel_pago_perc').innerText = ((pagos/total)*100).toFixed(1) + "%";
             document.getElementById('bar_pago').style.width = ((pagos/total)*100) + "%";
 
-            // Atualiza Cenários (Pessimista: 50% da taxa atual, Realista: Atual, Otimista: 150% da atual)
-            // Se taxa atual for 0, usamos uma base de 1% para simular
-            const baseRate = convRate > 0 ? convRate : 1.0; 
-            
-            // Leads "trabalháveis" restantes (Pendentes + Enviados que não pagaram? Vamos simplificar: Leads Totais - Pagos)
-            // Mas para projeção futura, usamos os PENDENTES de envio
-            const leadsParaTrabalhar = total - enviados; 
-
-            const scenarios = [
-                { name: "Pessimista (Baixa Conv.)", rate: baseRate * 0.5 },
-                { name: "Realista (Tendência Atual)", rate: baseRate },
-                { name: "Otimista (Alta Performance)", rate: baseRate * 1.5 }
-            ];
-
+            // Cenários
+            const baseRate = convRate || 1.0; 
             const sBody = document.getElementById('scenario_body');
             sBody.innerHTML = '';
-
-            scenarios.forEach(s => {
-                const novasVendas = Math.floor(leadsParaTrabalhar * (s.rate / 100));
-                const recAdicional = novasVendas * ticketVal;
-                const recTotal = faturamento + recAdicional;
-
-                sBody.innerHTML += `
-                    <tr>
-                        <td><strong>${s.name}</strong></td>
-                        <td>${s.rate.toFixed(1)}%</td>
-                        <td>+${novasVendas}</td>
-                        <td style="color: #64748b;">+${fmt(recAdicional)}</td>
-                        <td style="font-weight:bold; color: var(--primary);">${fmt(recTotal)}</td>
-                    </tr>
-                `;
+            
+            [{n:"Pessimista",r: baseRate*0.5}, {n:"Realista",r: baseRate}, {n:"Otimista",r: baseRate*1.5}]
+            .forEach(s => {
+                const novas = Math.floor(pendentes * (s.r/100));
+                const recTotal = faturamento + (novas * ticketVal);
+                sBody.innerHTML += `<tr><td>${s.n}</td><td>${s.r.toFixed(1)}%</td><td>+${novas}</td><td style="font-weight:bold; color:var(--primary);">${fmt(recTotal)}</td></tr>`;
             });
         }
-
         window.onload = loadFromFirebase;
     </script>
 </body>
