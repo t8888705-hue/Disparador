@@ -102,13 +102,13 @@
         <div id="tab-import" class="tab-content active">
             <h2>Configurar Campanha</h2>
             <div class="editor-toolbar">
-                <small style="font-weight: bold; color: #64748b;">Use: [NOME] [UNIDADE] e {Oi|Olá} para variar.</small>
+                <small style="font-weight: bold; color: #64748b;">Use: [NOME] [UNIDADE] [CURSO] e {Oi|Olá} para variar.</small>
             </div>
-            <textarea id="msg_template" placeholder="Digite sua mensagem...">{Olá|Oi} [NOME], referente à matrícula na unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
+            <textarea id="msg_template" placeholder="Digite sua mensagem...">{Olá|Oi} [NOME], referente à matrícula no curso [CURSO] da unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
             
             <div style="background: #f8fafc; padding: 20px; margin-top: 15px; border: 2px dashed #cbd5e1; text-align: center;">
                 <input type="file" id="csv_file" accept=".csv">
-                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA/ID; Nome; Telefone; Unidade; Tipo</p>
+                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA/ID; Nome; Telefone; Unidade; Curso; Tipo</p>
             </div>
             <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Processar e Sincronizar</button>
         </div>
@@ -117,6 +117,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
                 <input type="text" id="search_term" placeholder="🔍 Buscar Nome ou RA..." onkeyup="renderTable()">
                 <select id="f_unidade" onchange="renderTable()"><option value="">Todas Unidades</option></select>
+                <select id="f_curso" onchange="renderTable()"><option value="">Todos Cursos</option></select>
                 <select id="f_status" onchange="renderTable()">
                     <option value="">Todos Status</option>
                     <option value="Pendente">Pendente</option>
@@ -134,6 +135,7 @@
                             <th>RA / ID</th>
                             <th>Nome</th>
                             <th>Unidade</th>
+                            <th>Curso</th>
                             <th>Ação</th>
                             <th>Status Financeiro</th>
                         </tr>
@@ -148,6 +150,10 @@
                 <div style="flex: 1;">
                     <label style="font-size: 11px; font-weight: bold;">Unidade</label>
                     <select id="rep_unidade" onchange="updateReport()"></select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; font-weight: bold;">Curso</label>
+                    <select id="rep_curso" onchange="updateReport()"></select>
                 </div>
                 <div style="flex: 1;">
                     <label style="font-size: 11px; font-weight: bold;">Ticket Médio (R$)</label>
@@ -237,14 +243,14 @@
                 lines.forEach((line, i) => {
                     if(i === 0 || !line.trim()) return;
                     const c = line.split(';');
-                    if(c.length >= 5) {
+                    if(c.length >= 6) {
                         const tel = c[2].replace(/\D/g,'');
-                        let msg = template.replace('[NOME]', c[1]).replace('[UNIDADE]', c[3]);
+                        let msg = template.replace('[NOME]', c[1]).replace('[UNIDADE]', c[3]).replace('[CURSO]', c[4]);
                         msg = spinText(msg) + '\u200B'.repeat(Math.floor(Math.random()*5));
                         
                         batch.push({
                             id: c[0].trim(),
-                            nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), tipo: c[4].trim(),
+                            nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), curso: c[4].trim(), tipo: c[5].trim(),
                             status: 'Pendente', link: `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msg)}`,
                             selected: false, timestamp: Date.now()
                         });
@@ -273,6 +279,8 @@
             rawData = snap.docs.map(doc => doc.data());
             
             const units = [...new Set(rawData.map(i => i.unidade))].sort();
+            const cursos = [...new Set(rawData.map(i => i.curso))].sort();
+            
             const popSelect = (id, list) => {
                 const el = document.getElementById(id);
                 const val = el.value;
@@ -282,6 +290,8 @@
             };
             popSelect('f_unidade', units);
             popSelect('rep_unidade', units);
+            popSelect('f_curso', cursos);
+            popSelect('rep_curso', cursos);
             
             renderTable();
             updateReport();
@@ -290,6 +300,7 @@
         // --- GESTÃO ---
         function renderTable() {
             const fUni = document.getElementById('f_unidade').value;
+            const fCurso = document.getElementById('f_curso').value;
             const fStat = document.getElementById('f_status').value;
             const search = document.getElementById('search_term').value.toLowerCase();
             
@@ -298,9 +309,10 @@
             
             rawData.filter(i => {
                 const matchUni = !fUni || i.unidade === fUni;
+                const matchCurso = !fCurso || i.curso === fCurso;
                 const matchStat = !fStat || i.status === fStat;
                 const matchSearch = !search || i.nome.toLowerCase().includes(search) || i.id.toLowerCase().includes(search);
-                return matchUni && matchStat && matchSearch;
+                return matchUni && matchCurso && matchStat && matchSearch;
             })
             .forEach(item => {
                 const tr = document.createElement('tr');
@@ -310,6 +322,7 @@
                     <td><strong>${item.id}</strong></td>
                     <td>${item.nome}</td>
                     <td>${item.unidade}</td>
+                    <td>${item.curso}</td>
                     <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>
                     <td><select onchange="updateStatus('${item.id}', this.value)" style="padding:5px;">
                         <option value="Pendente" ${item.status==='Pendente'?'selected':''}>Pendente</option>
@@ -353,8 +366,12 @@
         // --- LÓGICA DO RELATÓRIO CORRIGIDA ---
         function updateReport() {
             const uni = document.getElementById('rep_unidade').value;
+            const curso = document.getElementById('rep_curso').value;
             const ticketVal = parseFloat(document.getElementById('rep_ticket').value) || 0;
-            const data = uni ? rawData.filter(i => i.unidade === uni) : rawData;
+            
+            let data = rawData;
+            if(uni) data = data.filter(i => i.unidade === uni);
+            if(curso) data = data.filter(i => i.curso === curso);
             
             const total = data.length;
             if(total === 0) return;
@@ -383,7 +400,7 @@
 
             // Atualiza KPI Cards
             document.getElementById('rep_date').innerText = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('rep_unit_display').innerText = uni ? uni.toUpperCase() : "GERAL";
+            document.getElementById('rep_unit_display').innerText = uni ? uni.toUpperCase() : (curso ? curso.toUpperCase() : "GERAL");
             document.getElementById('kpi_leads').innerText = total;
             document.getElementById('kpi_contatos').innerText = qtdEnviados; // Exibe quantos estão "na rua" aguardando pgto
             document.getElementById('kpi_vendas').innerText = qtdPagos;
