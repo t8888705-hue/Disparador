@@ -43,9 +43,10 @@
         .btn-primary { background: var(--accent); color: white; }
         .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; border-radius: 4px; }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: #94a3b8; color: white; }
         
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; }
+        .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         textarea#msg_template { border-radius: 0 0 8px 8px; border-top: 1px solid var(--border); margin-top: 0; min-height: 120px; }
 
         /* TABLE GESTÃO */
@@ -103,6 +104,12 @@
             <h2>Configurar Campanha</h2>
             <div class="editor-toolbar">
                 <small style="font-weight: bold; color: #64748b;">Use: [NOME] [UNIDADE] [CURSO] e {Oi|Olá} para variar.</small>
+                <input type="text" id="template_name" placeholder="Nome do template" style="width: auto; flex: 1;" />
+                <button type="button" class="btn btn-secondary" onclick="saveTemplateWithName()" style="font-size:12px;">💾 Salvar como...</button>
+                <select id="template_list" style="width: auto; min-width: 150px;" onchange="loadSelectedTemplate()">
+                    <option value="">-- Carregar --</option>
+                </select>
+                <button type="button" class="btn btn-danger" onclick="deleteTemplate()" style="font-size:12px;">🗑️ Excluir</button>
             </div>
             <textarea id="msg_template" placeholder="Digite sua mensagem...">{Olá|Oi} [NOME], referente à matrícula no curso [CURSO] da unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
             
@@ -226,6 +233,80 @@
                 const choices = content.split('|');
                 return choices[Math.floor(Math.random() * choices.length)];
             });
+        }
+
+        // --- GERENCIAMENTO DE MÚLTIPLOS TEMPLATES (localStorage) ---
+        function getTemplates() {
+            const stored = localStorage.getItem('templates');
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveTemplates(templates) {
+            localStorage.setItem('templates', JSON.stringify(templates));
+        }
+
+        function refreshTemplateList() {
+            const select = document.getElementById('template_list');
+            const templates = getTemplates();
+            select.innerHTML = '<option value="">-- Carregar --</option>';
+            templates.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.name;
+                opt.textContent = t.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function saveTemplateWithName() {
+            const name = document.getElementById('template_name').value.trim();
+            const content = document.getElementById('msg_template').value;
+            if (!name) {
+                alert('Digite um nome para o template.');
+                return;
+            }
+            const templates = getTemplates();
+            // Verifica se já existe um template com esse nome; se sim, pergunta se quer sobrescrever
+            const existingIndex = templates.findIndex(t => t.name === name);
+            if (existingIndex !== -1) {
+                if (!confirm(`Já existe um template com o nome "${name}". Deseja sobrescrevê-lo?`)) return;
+                templates[existingIndex].content = content;
+            } else {
+                templates.push({ name, content });
+            }
+            saveTemplates(templates);
+            refreshTemplateList();
+            alert('Template salvo com sucesso!');
+        }
+
+        function loadSelectedTemplate() {
+            const select = document.getElementById('template_list');
+            const name = select.value;
+            if (!name) return;
+            const templates = getTemplates();
+            const template = templates.find(t => t.name === name);
+            if (template) {
+                document.getElementById('msg_template').value = template.content;
+                document.getElementById('template_name').value = name; // opcional: preenche o nome
+            }
+        }
+
+        function deleteTemplate() {
+            const select = document.getElementById('template_list');
+            const name = select.value;
+            if (!name) {
+                alert('Selecione um template para excluir.');
+                return;
+            }
+            if (!confirm(`Excluir o template "${name}"?`)) return;
+            let templates = getTemplates();
+            templates = templates.filter(t => t.name !== name);
+            saveTemplates(templates);
+            refreshTemplateList();
+            if (templates.length === 0) {
+                document.getElementById('template_name').value = '';
+                // Opcional: limpar textarea? Não, mantém o atual.
+            }
+            alert('Template excluído.');
         }
 
         // --- IMPORTAÇÃO ---
@@ -446,7 +527,15 @@
                 `;
             });
         }
-        window.onload = loadFromFirebase;
+
+        // Inicialização: carrega dados do Firebase, templates e define o template padrão
+        function init() {
+            loadFromFirebase();
+            refreshTemplateList();
+            // Se houver templates, carregar o primeiro? Ou manter o padrão do textarea.
+            // Por enquanto, apenas deixa o textarea como está (já tem um valor padrão).
+        }
+        window.onload = init;
     </script>
 </body>
 </html>
