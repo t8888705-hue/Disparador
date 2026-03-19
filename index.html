@@ -12,25 +12,23 @@
         :root {
             --primary: #0f172a; --accent: #2563eb; --whatsapp: #25D366;
             --danger: #ef4444; --bg: #f1f5f9; --card: #ffffff;
-            --border: #e2e8f0;
+            --border: #e2e8f0; --warning: #f59e0b;
         }
 
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding-top: 90px; color: #334155; }
         
-        /* BARRA DE SEGURANÇA */
         #safety-bar {
-            position: fixed; top: 0; left: 0; right: 0; height: 70px;
+            position: fixed; top: 0; left: 0; right: 0; height: 75px;
             background: #1e293b; color: white; display: flex; flex-direction: column; align-items: center;
             justify-content: center; z-index: 1000; font-weight: bold; transition: background 0.5s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         #safety-bar.locked { background: var(--danger); }
+        #safety-bar.waiting { background: var(--warning); }
         #safety-bar.safe { background: var(--whatsapp); }
         #safety-sub { font-size: 11px; opacity: 0.9; font-weight: normal; margin-top: 2px; }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
-        /* NAVEGAÇÃO */
         .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 10px; }
         .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
         .tab-btn.active { background: var(--card); color: var(--accent); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -38,100 +36,58 @@
         .tab-content { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .tab-content.active { display: block; }
 
-        /* INPUTS E BOTÕES GERAIS */
         .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; border-radius: 4px; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-secondary { background: #94a3b8; color: white; }
         
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; }
         textarea#msg_template { border-radius: 0 0 8px 8px; border-top: 1px solid var(--border); margin-top: 0; min-height: 120px; }
 
-        /* TABLE GESTÃO */
         .table-wrap { overflow-x: auto; max-height: 550px; border: 1px solid var(--border); border-radius: 8px; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background: #f8fafc; padding: 12px; text-align: left; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); color: #475569; }
         td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-        tr.status-pago { background: #f0fdf4 !important; }
-        tr.status-enviado { background: #fffbeb !important; }
-
-        /* RELATÓRIO PDF */
-        .report-page { 
-            background: white; width: 100%; max-width: 210mm; min-height: 297mm; margin: 0 auto; 
-            padding: 40px; box-sizing: border-box; border: 1px solid #ddd; position: relative;
-        }
-        .rep-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
-        .rep-logo h1 { margin: 0; color: var(--primary); font-size: 24px; text-transform: uppercase; }
-        .rep-meta { text-align: right; font-size: 12px; color: #64748b; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-        .kpi-card { border: 1px solid var(--border); padding: 15px; border-radius: 6px; text-align: center; background: #fff; }
-        .kpi-card strong { font-size: 20px; color: var(--primary); display: block; }
-        .section-title { background: #f1f5f9; padding: 8px 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #475569; margin: 20px 0 10px 0; border-left: 4px solid var(--accent); }
-        .rep-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-        .rep-table th { background: var(--primary); color: white; padding: 8px; }
-        .rep-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
-        .footer { position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; }
-        .progress-bar { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; width: 100%; }
-        .progress-fill { height: 100%; background: var(--accent); }
-
-        @media print {
-            body { padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #safety-bar, .tab-nav, .filter-input-area, .no-print { display: none !important; }
-            .container { max-width: 100%; margin: 0; padding: 0; }
-            .tab-content { display: none; }
-            #tab-report { display: block !important; }
-            .report-page { border: none; padding: 20px; margin: 0; }
-        }
     </style>
 </head>
 <body>
 
     <div id="safety-bar" class="safe">
-        <div id="safety-main">✅ SISTEMA PRONTO PARA DISPAROS</div>
-        <div id="safety-sub">Modo Seguro Web Ativo • Sessão Atual: 0 envios</div>
+        <div id="safety-main">✅ SISTEMA PRONTO</div>
+        <div id="safety-sub">Monitoramento de segurança ativo</div>
     </div>
 
     <div class="container">
-        <div class="tab-nav no-print">
+        <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('tab-import')">1. Configurar & Importar</button>
             <button class="tab-btn" onclick="switchTab('tab-manage')">2. Gestão & Disparos</button>
-            <button class="tab-btn" onclick="switchTab('tab-report')">3. Relatório Executivo</button>
         </div>
 
         <div id="tab-import" class="tab-content active">
             <h2>Configurar Campanha</h2>
             <div class="editor-toolbar">
                 <small style="font-weight: bold; color: #64748b;">Use: [NOME] [UNIDADE] [CURSO] e {Oi|Olá} para variar.</small>
-                <input type="text" id="template_name" placeholder="Nome do template" style="width: auto; flex: 1;" />
-                <button type="button" class="btn btn-secondary" onclick="saveTemplateWithName()" style="font-size:12px;">💾 Salvar como...</button>
-                <select id="template_list" style="width: auto; min-width: 150px;" onchange="loadSelectedTemplate()">
-                    <option value="">-- Carregar --</option>
-                </select>
-                <button type="button" class="btn btn-danger" onclick="deleteTemplate()" style="font-size:12px;">🗑️ Excluir</button>
             </div>
             <textarea id="msg_template" placeholder="Digite sua mensagem...">{Olá|Oi} [NOME], referente à matrícula no curso [CURSO] da unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
             
             <div style="background: #f8fafc; padding: 20px; margin-top: 15px; border: 2px dashed #cbd5e1; text-align: center;">
                 <input type="file" id="csv_file" accept=".csv">
-                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA/ID; Nome; Telefone; Unidade; Curso; Tipo</p>
+                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA; Nome; Telefone; Unidade; Curso; Tipo</p>
             </div>
-            <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Processar e Sincronizar</button>
+            <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Processar (A-Z) e Sincronizar</button>
         </div>
 
         <div id="tab-manage" class="tab-content">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
                 <input type="text" id="search_term" placeholder="🔍 Buscar Nome ou RA..." onkeyup="renderTable()">
                 <select id="f_unidade" onchange="renderTable()"><option value="">Todas Unidades</option></select>
-                <select id="f_curso" onchange="renderTable()"><option value="">Todos Cursos</option></select>
                 <select id="f_status" onchange="renderTable()">
                     <option value="">Todos Status</option>
                     <option value="Pendente">Pendente</option>
                     <option value="Enviado">Enviado</option>
-                    <option value="Pago">Pago</option>
                 </select>
-                <button onclick="bulkDelete()" class="btn btn-danger" style="font-size: 12px;">🗑️ Excluir Selecionados</button>
+                <button onclick="bulkDelete()" class="btn btn-danger" style="font-size: 12px;">🗑️ Limpar Lista</button>
             </div>
 
             <div class="table-wrap">
@@ -140,71 +96,20 @@
                         <tr>
                             <th width="30"><input type="checkbox" onclick="toggleAll(this)"></th>
                             <th>RA / ID</th>
-                            <th>Nome</th>
+                            <th>Nome (A-Z)</th>
                             <th>Unidade</th>
                             <th>Curso</th>
                             <th>Ação</th>
-                            <th>Status Financeiro</th>
                         </tr>
                     </thead>
                     <tbody id="table_body"></tbody>
                 </table>
             </div>
         </div>
-
-        <div id="tab-report" class="tab-content">
-            <div class="filter-input-area no-print" style="background: #f8fafc; padding: 20px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: bold;">Unidade</label>
-                    <select id="rep_unidade" onchange="updateReport()"></select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: bold;">Curso</label>
-                    <select id="rep_curso" onchange="updateReport()"></select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: bold;">Ticket Médio (R$)</label>
-                    <input type="number" id="rep_ticket" value="100.00" onchange="updateReport()">
-                </div>
-                <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir Relatório</button>
-            </div>
-
-            <div class="report-page">
-                <div class="rep-header">
-                    <div class="rep-logo"><h1>Smart Tools Acadêmico</h1><span>Relatório Financeiro</span></div>
-                    <div class="rep-meta"><span id="rep_date">--/--/----</span><strong id="rep_unit_display">GERAL</strong></div>
-                </div>
-
-                <div class="kpi-grid">
-                    <div class="kpi-card"><span>Base (Leads)</span><strong id="kpi_leads">0</strong></div>
-                    <div class="kpi-card"><span>Boletos Enviados</span><strong id="kpi_contatos">0</strong></div>
-                    <div class="kpi-card"><span>Pagos (Qtd)</span><strong id="kpi_vendas" style="color: var(--whatsapp);">0</strong></div>
-                    <div class="kpi-card"><span>Receita Realizada</span><strong id="kpi_faturamento" style="color: var(--primary);">R$ 0,00</strong></div>
-                </div>
-
-                <div class="section-title">Performance de Funil</div>
-                <table class="rep-table">
-                    <thead><tr><th>Etapa</th><th>Qtd</th><th>%</th><th>Visual</th></tr></thead>
-                    <tbody>
-                        <tr><td>Base Total</td><td id="funnel_total">0</td><td>100%</td><td><div class="progress-bar"><div class="progress-fill" style="width:100%; background:#cbd5e1;"></div></div></td></tr>
-                        <tr><td>Boletos Enviados</td><td id="funnel_env">0</td><td id="funnel_env_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_env" style="width:0%; background:var(--accent);"></div></div></td></tr>
-                        <tr><td>Pagos Confirmados</td><td id="funnel_pago">0</td><td id="funnel_pago_perc">0%</td><td><div class="progress-bar"><div class="progress-fill" id="bar_pago" style="width:0%; background:var(--whatsapp);"></div></div></td></tr>
-                    </tbody>
-                </table>
-
-                <div class="section-title">Previsão de Fechamento (Soma Pagos + Projeção)</div>
-                <p style="font-size:11px; color:#64748b; margin-top:-5px;">*Cálculo: (Receita Realizada) + (Projeção sobre Boletos em Aberto)</p>
-                <table class="rep-table">
-                    <thead><tr><th>Cenário</th><th>Taxa Aplicada</th><th>Novas Vendas (Est.)</th><th>Receita Total (Prevista)</th></tr></thead>
-                    <tbody id="scenario_body"></tbody>
-                </table>
-
-                <div class="footer"><span>Gerado via SmartTools System</span><span>Confidencial</span></div>
-            </div>
-        </div>
     </div>
 
     <script>
+        // Configuração Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDiZQeKce5CUFGrY7UpkyZzBvem-5PFo1Y",
             authDomain: "disparador-ddb0c.firebaseapp.com",
@@ -217,9 +122,45 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Parâmetros de Segurança
+        const MAX_DIARIO = 100;
+        const BATCH_SIZE = 15;
+        const MIN_DELAY = 45;
+        const MAX_DELAY = 120;
+        const LONG_PAUSE_MIN = 20;
+
         let rawData = [];
         let isLocked = false;
         let sessionCount = 0;
+        let dailyCount = parseInt(localStorage.getItem('dailyCount')) || 0;
+        let lastDate = localStorage.getItem('lastDate') || new Date().toLocaleDateString();
+
+        if (lastDate !== new Date().toLocaleDateString()) {
+            dailyCount = 0;
+            localStorage.setItem('dailyCount', 0);
+            localStorage.setItem('lastDate', new Date().toLocaleDateString());
+        }
+
+        // --- FUNÇÃO DO BIP SONORO (DISCRETO) ---
+        function playSuccessBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine'; // Som suave
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá (A5)
+                
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // Volume bem baixo/discreto
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } catch (e) { console.log("Áudio não suportado ou bloqueado pelo browser."); }
+        }
 
         function switchTab(id) {
             document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
@@ -235,82 +176,7 @@
             });
         }
 
-        // --- GERENCIAMENTO DE MÚLTIPLOS TEMPLATES (localStorage) ---
-        function getTemplates() {
-            const stored = localStorage.getItem('templates');
-            return stored ? JSON.parse(stored) : [];
-        }
-
-        function saveTemplates(templates) {
-            localStorage.setItem('templates', JSON.stringify(templates));
-        }
-
-        function refreshTemplateList() {
-            const select = document.getElementById('template_list');
-            const templates = getTemplates();
-            select.innerHTML = '<option value="">-- Carregar --</option>';
-            templates.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.name;
-                opt.textContent = t.name;
-                select.appendChild(opt);
-            });
-        }
-
-        function saveTemplateWithName() {
-            const name = document.getElementById('template_name').value.trim();
-            const content = document.getElementById('msg_template').value;
-            if (!name) {
-                alert('Digite um nome para o template.');
-                return;
-            }
-            const templates = getTemplates();
-            // Verifica se já existe um template com esse nome; se sim, pergunta se quer sobrescrever
-            const existingIndex = templates.findIndex(t => t.name === name);
-            if (existingIndex !== -1) {
-                if (!confirm(`Já existe um template com o nome "${name}". Deseja sobrescrevê-lo?`)) return;
-                templates[existingIndex].content = content;
-            } else {
-                templates.push({ name, content });
-            }
-            saveTemplates(templates);
-            refreshTemplateList();
-            alert('Template salvo com sucesso!');
-        }
-
-        function loadSelectedTemplate() {
-            const select = document.getElementById('template_list');
-            const name = select.value;
-            if (!name) return;
-            const templates = getTemplates();
-            const template = templates.find(t => t.name === name);
-            if (template) {
-                document.getElementById('msg_template').value = template.content;
-                document.getElementById('template_name').value = name; // opcional: preenche o nome
-            }
-        }
-
-        function deleteTemplate() {
-            const select = document.getElementById('template_list');
-            const name = select.value;
-            if (!name) {
-                alert('Selecione um template para excluir.');
-                return;
-            }
-            if (!confirm(`Excluir o template "${name}"?`)) return;
-            let templates = getTemplates();
-            templates = templates.filter(t => t.name !== name);
-            saveTemplates(templates);
-            refreshTemplateList();
-            if (templates.length === 0) {
-                document.getElementById('template_name').value = '';
-                // Opcional: limpar textarea? Não, mantém o atual.
-            }
-            alert('Template excluído.');
-        }
-
-        // --- IMPORTAÇÃO ---
-        function processCSV() {
+        async function processCSV() {
             const file = document.getElementById('csv_file').files[0];
             const template = document.getElementById('msg_template').value;
             if(!file) return alert("Selecione o CSV.");
@@ -318,224 +184,130 @@
             const reader = new FileReader();
             reader.readAsText(file, 'ISO-8859-1'); 
             
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const lines = e.target.result.split(/\r?\n/);
-                const batch = [];
+                let batchData = [];
+                
                 lines.forEach((line, i) => {
                     if(i === 0 || !line.trim()) return;
                     const c = line.split(';');
-                    if(c.length >= 6) {
+                    if(c.length >= 5) {
                         const tel = c[2].replace(/\D/g,'');
                         let msg = template.replace('[NOME]', c[1]).replace('[UNIDADE]', c[3]).replace('[CURSO]', c[4]);
                         msg = spinText(msg) + '\u200B'.repeat(Math.floor(Math.random()*5));
                         
-                        batch.push({
-                            id: c[0].trim(),
-                            nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), curso: c[4].trim(), tipo: c[5].trim(),
-                            status: 'Pendente', link: `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msg)}`,
+                        batchData.push({
+                            id: c[0].trim(), nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), 
+                            curso: c[4].trim(), status: 'Pendente', 
+                            link: `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msg)}`,
                             selected: false, timestamp: Date.now()
                         });
                     }
                 });
-                if(batch.length) saveToFirebase(batch);
+
+                batchData.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+                if(batchData.length) await saveToFirebase(batchData);
             };
         }
 
         async function saveToFirebase(data) {
             const btn = document.querySelector('[onclick="processCSV()"]');
             btn.innerText = "⏳ Sincronizando...";
-            let c = 0;
-            for (const item of data) {
-                await db.collection("contatos").doc(item.id).set(item);
-                c++;
-                if(c % 20 === 0) btn.innerText = `Salvando: ${c}/${data.length}`;
+            try {
+                for (const item of data) {
+                    await db.collection("contatos").doc(item.id).set(item);
+                }
+                alert("Importação A-Z concluída!");
+                btn.innerText = "🚀 Processar e Sincronizar";
+                switchTab('tab-manage');
+            } catch (error) {
+                alert("Erro: " + error.message);
+                btn.innerText = "🚀 Processar e Sincronizar";
             }
-            alert("Sucesso!");
-            btn.innerText = "🚀 Processar e Sincronizar";
-            switchTab('tab-manage');
         }
 
         async function loadFromFirebase() {
             const snap = await db.collection("contatos").get();
             rawData = snap.docs.map(doc => doc.data());
-            
-            const units = [...new Set(rawData.map(i => i.unidade))].sort();
-            const cursos = [...new Set(rawData.map(i => i.curso))].sort();
-            
-            const popSelect = (id, list) => {
-                const el = document.getElementById(id);
-                const val = el.value;
-                el.innerHTML = '<option value="">Todas</option>';
-                list.forEach(u => el.innerHTML += `<option value="${u}">${u}</option>`);
-                el.value = val;
-            };
-            popSelect('f_unidade', units);
-            popSelect('rep_unidade', units);
-            popSelect('f_curso', cursos);
-            popSelect('rep_curso', cursos);
-            
+            rawData.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+            updateFilters();
             renderTable();
-            updateReport();
+            updateSafetyUI();
         }
 
-        // --- GESTÃO ---
+        function updateFilters() {
+            const units = [...new Set(rawData.map(i => i.unidade))].sort();
+            const el = document.getElementById('f_unidade');
+            el.innerHTML = '<option value="">Todas Unidades</option>';
+            units.forEach(u => el.innerHTML += `<option value="${u}">${u}</option>`);
+        }
+
         function renderTable() {
             const fUni = document.getElementById('f_unidade').value;
-            const fCurso = document.getElementById('f_curso').value;
             const fStat = document.getElementById('f_status').value;
             const search = document.getElementById('search_term').value.toLowerCase();
-            
             const tbody = document.getElementById('table_body');
             tbody.innerHTML = '';
             
             rawData.filter(i => {
-                const matchUni = !fUni || i.unidade === fUni;
-                const matchCurso = !fCurso || i.curso === fCurso;
-                const matchStat = !fStat || i.status === fStat;
-                const matchSearch = !search || i.nome.toLowerCase().includes(search) || i.id.toLowerCase().includes(search);
-                return matchUni && matchCurso && matchStat && matchSearch;
-            })
-            .forEach(item => {
+                return (!fUni || i.unidade === fUni) && (!fStat || i.status === fStat) && 
+                       (!search || i.nome.toLowerCase().includes(search) || i.id.toLowerCase().includes(search));
+            }).forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = item.status === 'Pago' ? 'status-pago' : (item.status === 'Enviado' ? 'status-enviado' : '');
+                tr.style.background = item.status === 'Enviado' ? '#fffbeb' : 'white';
                 tr.innerHTML = `
                     <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
-                    <td><strong>${item.id}</strong></td>
+                    <td>${item.id}</td>
                     <td>${item.nome}</td>
                     <td>${item.unidade}</td>
                     <td>${item.curso}</td>
-                    <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>
-                    <td><select onchange="updateStatus('${item.id}', this.value)" style="padding:5px;">
-                        <option value="Pendente" ${item.status==='Pendente'?'selected':''}>Pendente</option>
-                        <option value="Enviado" ${item.status==='Enviado'?'selected':''}>Enviado</option>
-                        <option value="Pago" ${item.status==='Pago'?'selected':''}>💰 Pago</option>
-                    </select></td>`;
+                    <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        async function updateStatus(id, st) {
-            const idx = rawData.findIndex(x => x.id === id);
-            if(idx !== -1) { rawData[idx].status = st; await db.collection("contatos").doc(id).update({status: st}); renderTable(); updateReport(); }
-        }
+        async function handleSend(id) {
+            if (isLocked) { event.preventDefault(); return alert("Segurança ativa! Aguarde."); }
+            if (dailyCount >= MAX_DIARIO) { event.preventDefault(); return alert("Limite diário atingido!"); }
 
-        function handleSend(id) {
-            if(isLocked) { event.preventDefault(); return alert("Aguarde a segurança!"); }
             sessionCount++;
-            updateStatus(id, 'Enviado');
+            dailyCount++;
+            localStorage.setItem('dailyCount', dailyCount);
+            
+            await db.collection("contatos").doc(id).update({status: 'Enviado'});
+            loadFromFirebase();
+            
             isLocked = true;
             const bar = document.getElementById('safety-bar');
-            bar.className = 'locked';
-            let t = Math.floor(Math.random() * (60 - 30 + 1)) + 30;
+            let isLong = sessionCount % BATCH_SIZE === 0;
+            let secondsWait = isLong ? (LONG_PAUSE_MIN * 60) : (Math.floor(Math.random() * (MAX_DELAY - MIN_DELAY + 1)) + MIN_DELAY);
+
+            bar.className = isLong ? 'waiting' : 'locked';
+            let t = secondsWait;
             const int = setInterval(() => {
-                document.getElementById('safety-main').innerText = `⏳ AGUARDE ${t}s`;
-                document.getElementById('safety-sub').innerText = `Sessão: ${sessionCount}`;
-                t--;
-                if(t < 0) { clearInterval(int); isLocked = false; bar.className = 'safe'; document.getElementById('safety-main').innerText = "✅ PRONTO"; }
+                const m = Math.floor(t / 60), s = t % 60;
+                document.getElementById('safety-main').innerText = isLong ? `☕ PAUSA: ${m}m ${s}s` : `⏳ PRÓXIMO: ${t}s`;
+                updateSafetyUI();
+                
+                if (t-- <= 0) {
+                    clearInterval(int);
+                    isLocked = false;
+                    bar.className = 'safe';
+                    document.getElementById('safety-main').innerText = "✅ SISTEMA PRONTO";
+                    playSuccessBeep(); // <--- Toca o bip ao liberar
+                }
             }, 1000);
+        }
+
+        function updateSafetyUI() {
+            document.getElementById('safety-sub').innerText = `Hoje: ${dailyCount}/${MAX_DIARIO} | Sessão: ${sessionCount}`;
         }
 
         function toggleSelect(id) { const i = rawData.find(x => x.id === id); if(i) i.selected = !i.selected; }
         function toggleAll(src) { rawData.forEach(i => i.selected = src.checked); renderTable(); }
-        async function bulkDelete() {
-            if(!confirm("Excluir selecionados?")) return;
-            const sel = rawData.filter(x => x.selected);
-            for(const i of sel) await db.collection("contatos").doc(i.id).delete();
-            loadFromFirebase();
-        }
+        async function bulkDelete() { if(confirm("Limpar lista?")) { for(const i of rawData) await db.collection("contatos").doc(i.id).delete(); loadFromFirebase(); } }
 
-        // --- LÓGICA DO RELATÓRIO CORRIGIDA ---
-        function updateReport() {
-            const uni = document.getElementById('rep_unidade').value;
-            const curso = document.getElementById('rep_curso').value;
-            const ticketVal = parseFloat(document.getElementById('rep_ticket').value) || 0;
-            
-            let data = rawData;
-            if(uni) data = data.filter(i => i.unidade === uni);
-            if(curso) data = data.filter(i => i.curso === curso);
-            
-            const total = data.length;
-            if(total === 0) return;
-
-            // Contagem
-            const qtdPagos = data.filter(i => i.status === 'Pago').length;
-            const qtdEnviados = data.filter(i => i.status === 'Enviado').length;
-            const qtdPendentes = data.filter(i => i.status === 'Pendente').length;
-
-            // 1. Receita Realizada (Já no bolso)
-            const receitaRealizada = qtdPagos * ticketVal;
-
-            // 2. Taxa de Conversão Real (Baseada em quem foi abordado)
-            // Consideramos abordados a soma de Pagos + Enviados (quem recebeu link)
-            const totalAbordados = qtdPagos + qtdEnviados;
-            const taxaConversao = totalAbordados > 0 ? (qtdPagos / totalAbordados) : 0; 
-            const taxaPerc = taxaConversao * 100;
-
-            // 3. Base para Projeção (Ouro na mesa)
-            // Calculamos sobre Enviados (que estão com link) + Pendentes (que vão receber)
-            // Essa é a "Base de Receita nos Boletos Enviados/A Enviar"
-            const leadsEmAberto = qtdEnviados + qtdPendentes;
-
-            // Formatação
-            const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            // Atualiza KPI Cards
-            document.getElementById('rep_date').innerText = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('rep_unit_display').innerText = uni ? uni.toUpperCase() : (curso ? curso.toUpperCase() : "GERAL");
-            document.getElementById('kpi_leads').innerText = total;
-            document.getElementById('kpi_contatos').innerText = qtdEnviados; // Exibe quantos estão "na rua" aguardando pgto
-            document.getElementById('kpi_vendas').innerText = qtdPagos;
-            document.getElementById('kpi_faturamento').innerText = fmt(receitaRealizada);
-
-            // Funil Visual
-            const envTotal = qtdEnviados + qtdPagos; // Enviados totais (incluindo quem pagou)
-            document.getElementById('funnel_total').innerText = total;
-            document.getElementById('funnel_env').innerText = envTotal;
-            document.getElementById('funnel_env_perc').innerText = ((envTotal/total)*100).toFixed(1) + "%";
-            document.getElementById('bar_env').style.width = ((envTotal/total)*100) + "%";
-            document.getElementById('funnel_pago').innerText = qtdPagos;
-            document.getElementById('funnel_pago_perc').innerText = ((qtdPagos/total)*100).toFixed(1) + "%";
-            document.getElementById('bar_pago').style.width = ((qtdPagos/total)*100) + "%";
-
-            // Tabela de Projeção (SOMA DOS PAGOS + EXPECTATIVA DOS ENVIADOS/PENDENTES)
-            const sBody = document.getElementById('scenario_body');
-            sBody.innerHTML = '';
-            
-            // Se não tiver conversão ainda, usamos 1% como base de simulação
-            const baseRate = taxaConversao > 0 ? taxaConversao : 0.01;
-
-            const cenarios = [
-                { nome: "Pessimista (Baixa)", fator: 0.8 }, // 80% da taxa atual
-                { nome: "Realista (Atual)", fator: 1.0 },   // 100% da taxa atual
-                { nome: "Otimista (Alta)", fator: 1.2 }     // 120% da taxa atual
-            ];
-
-            cenarios.forEach(cen => {
-                const taxaCenario = baseRate * cen.fator;
-                // Quantos mais vão pagar baseado nos que estão em aberto?
-                const novasVendasEst = Math.floor(leadsEmAberto * taxaCenario);
-                const receitaExtra = novasVendasEst * ticketVal;
-                const receitaFinalPrevista = receitaRealizada + receitaExtra;
-
-                sBody.innerHTML += `
-                    <tr>
-                        <td><strong>${cen.nome}</strong></td>
-                        <td>${(taxaCenario * 100).toFixed(1)}%</td>
-                        <td>+${novasVendasEst} boletos</td>
-                        <td style="font-weight:bold; color:var(--primary);">${fmt(receitaFinalPrevista)}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        // Inicialização: carrega dados do Firebase, templates e define o template padrão
-        function init() {
-            loadFromFirebase();
-            refreshTemplateList();
-            // Se houver templates, carregar o primeiro? Ou manter o padrão do textarea.
-            // Por enquanto, apenas deixa o textarea como está (já tem um valor padrão).
-        }
-        window.onload = init;
+        window.onload = loadFromFirebase;
     </script>
 </body>
 </html>
