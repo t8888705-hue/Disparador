@@ -12,7 +12,8 @@
         :root {
             --primary: #0f172a; --accent: #2563eb; --whatsapp: #25D366;
             --danger: #ef4444; --bg: #f1f5f9; --card: #ffffff;
-            --border: #e2e8f0; --warning: #f59e0b;
+            --border: #e2e8f0; --warning: #f59e0b; --info: #3b82f6;
+            --paid: #10b981;
         }
 
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding-top: 90px; color: #334155; }
@@ -28,9 +29,9 @@
         #safety-bar.safe { background: var(--whatsapp); }
         #safety-sub { font-size: 11px; opacity: 0.9; font-weight: normal; margin-top: 2px; }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 10px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 10px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; background: transparent; }
         .tab-btn.active { background: var(--card); color: var(--accent); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
         .tab-content { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -38,17 +39,27 @@
 
         .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
-        .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; border-radius: 4px; }
+        .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; border-radius: 4px; display: inline-block; cursor: pointer; border: none; }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
         
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; }
+        .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         textarea#msg_template { border-radius: 0 0 8px 8px; border-top: 1px solid var(--border); margin-top: 0; min-height: 120px; }
 
         .table-wrap { overflow-x: auto; max-height: 550px; border: 1px solid var(--border); border-radius: 8px; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background: #f8fafc; padding: 12px; text-align: left; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); color: #475569; }
-        td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        select.status-select { width: auto; padding: 4px 6px; font-size: 12px; margin: 0; }
+        
+        .report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: #f8fafc; padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-number { font-size: 28px; font-weight: bold; color: var(--accent); }
+        .projection-box { background: #f1f5f9; padding: 20px; border-radius: 12px; margin-top: 20px; }
+        .comment-box { background: #fff7e6; border-left: 5px solid var(--warning); padding: 15px; margin-top: 20px; font-style: italic; }
+        .financial-input { display: flex; gap: 15px; flex-wrap: wrap; margin: 20px 0; align-items: flex-end; }
+        .financial-input div { flex: 1; min-width: 150px; }
     </style>
 </head>
 <body>
@@ -62,54 +73,81 @@
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('tab-import')">1. Configurar & Importar</button>
             <button class="tab-btn" onclick="switchTab('tab-manage')">2. Gestão & Disparos</button>
+            <button class="tab-btn" onclick="switchTab('tab-reports')">3. Relatórios & Análise</button>
         </div>
 
         <div id="tab-import" class="tab-content active">
             <h2>Configurar Campanha</h2>
             <div class="editor-toolbar">
-                <small style="font-weight: bold; color: #64748b;">Use: [NOME] [UNIDADE] [CURSO] e {Oi|Olá} para variar.</small>
+                <small style="font-weight: bold; color: #64748b;">Variáveis: [NOME] [UNIDADE] [CURSO] [CUMPRIMENTO] (automático: Bom dia, Boa tarde, Boa noite) e {opção1|opção2} para variação.</small>
+                <button onclick="saveTemplate()" class="btn btn-primary btn-sm">💾 Salvar Modelo</button>
             </div>
-            <textarea id="msg_template" placeholder="Digite sua mensagem...">{Olá|Oi} [NOME], referente à matrícula no curso [CURSO] da unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
+            <textarea id="msg_template" placeholder="Digite sua mensagem...">[CUMPRIMENTO] [NOME], referente à matrícula no curso [CURSO] da unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
             
             <div style="background: #f8fafc; padding: 20px; margin-top: 15px; border: 2px dashed #cbd5e1; text-align: center;">
                 <input type="file" id="csv_file" accept=".csv">
-                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA; Nome; Telefone; Unidade; Curso; Tipo</p>
+                <p style="font-size: 12px; color: #64748b; margin-top: 5px;">CSV: RA; Nome; Telefone; Unidade; Curso; Tipo (opcional)</p>
             </div>
             <button onclick="processCSV()" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;">🚀 Processar (A-Z) e Sincronizar</button>
         </div>
 
         <div id="tab-manage" class="tab-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
-                <input type="text" id="search_term" placeholder="🔍 Buscar Nome ou RA..." onkeyup="renderTable()">
-                <select id="f_unidade" onchange="renderTable()"><option value="">Todas Unidades</option></select>
-                <select id="f_status" onchange="renderTable()">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="search_term" placeholder="🔍 Buscar Nome ou RA..." onkeyup="applyFiltersAndRender()">
+                <select id="f_unidade" onchange="applyFiltersAndRender()"><option value="">Todas Unidades</option></select>
+                <select id="f_status" onchange="applyFiltersAndRender()">
                     <option value="">Todos Status</option>
                     <option value="Pendente">Pendente</option>
                     <option value="Enviado">Enviado</option>
+                    <option value="Número inválido">Número inválido</option>
+                    <option value="Boleto indisponível">Boleto indisponível</option>
+                    <option value="Pago">Pago</option>
                 </select>
-                <button onclick="bulkDelete()" class="btn btn-danger" style="font-size: 12px;">🗑️ Limpar Lista</button>
+                <button onclick="bulkDeleteSelected()" class="btn btn-danger" style="font-size: 12px;">🗑️ Excluir Selecionados</button>
+                <button onclick="bulkUpdateStatus('Enviado')" class="btn btn-primary btn-sm">📨 Marcar selecionados como Enviado</button>
             </div>
 
             <div class="table-wrap">
-                <table>
+                 <table>
                     <thead>
-                        <tr>
+                         <tr>
                             <th width="30"><input type="checkbox" onclick="toggleAll(this)"></th>
                             <th>RA / ID</th>
                             <th>Nome (A-Z)</th>
                             <th>Unidade</th>
                             <th>Curso</th>
+                            <th>Status</th>
                             <th>Ação</th>
-                        </tr>
+                         </tr>
                     </thead>
                     <tbody id="table_body"></tbody>
-                </table>
+                 </table>
             </div>
+        </div>
+
+        <div id="tab-reports" class="tab-content">
+            <h2>📊 Análise Estratégica de Arrecadação</h2>
+            <div class="financial-input">
+                <div>
+                    <label>💰 Total Recebido (R$)</label>
+                    <input type="number" id="total_received" step="0.01" placeholder="0,00" value="0">
+                </div>
+                <div>
+                    <label>📄 Total Valor dos Boletos Enviados (R$)</label>
+                    <input type="number" id="total_boletos" step="0.01" placeholder="0,00" value="0">
+                </div>
+                <div>
+                    <button onclick="saveReportData()" class="btn btn-primary btn-sm" style="margin-top: 22px;">💾 Salvar dados financeiros</button>
+                </div>
+            </div>
+            
+            <div id="report_stats"></div>
+            <div id="report_comment" class="comment-box"></div>
         </div>
     </div>
 
     <script>
-        // Configuração Firebase
+        // ================= CONFIGURAÇÃO FIREBASE =================
         const firebaseConfig = {
             apiKey: "AIzaSyDiZQeKce5CUFGrY7UpkyZzBvem-5PFo1Y",
             authDomain: "disparador-ddb0c.firebaseapp.com",
@@ -122,12 +160,12 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Parâmetros de Segurança
-        const MAX_DIARIO = 100;
-        const BATCH_SIZE = 15;
-        const MIN_DELAY = 45;
-        const MAX_DELAY = 120;
-        const LONG_PAUSE_MIN = 20;
+        // ================= SEGURANÇA MELHORADA =================
+        const MAX_DIARIO = 80;
+        const BATCH_SIZE = 12;
+        const MIN_DELAY = 60;
+        const MAX_DELAY = 150;
+        const LONG_PAUSE_MIN = 25;
 
         let rawData = [];
         let isLocked = false;
@@ -141,70 +179,96 @@
             localStorage.setItem('lastDate', new Date().toLocaleDateString());
         }
 
-        // --- FUNÇÃO DO BIP SONORO (DISCRETO) ---
-        function playSuccessBeep() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
+        let currentFilters = {
+            unidade: localStorage.getItem('filter_unidade') || '',
+            status: localStorage.getItem('filter_status') || '',
+            search: localStorage.getItem('filter_search') || ''
+        };
 
-                oscillator.type = 'sine'; // Som suave
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá (A5)
-                
-                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // Volume bem baixo/discreto
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.2);
-            } catch (e) { console.log("Áudio não suportado ou bloqueado pelo browser."); }
+        // ================= FUNÇÃO DE CUMPRIMENTO DINÂMICO =================
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) return "Bom dia";
+            if (hour >= 12 && hour < 18) return "Boa tarde";
+            return "Boa noite";
         }
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelector(`[onclick="switchTab('${id}')"]`).classList.add('active');
-            if(id !== 'tab-import') loadFromFirebase();
-        }
-
-        function spinText(text) {
-            return text.replace(/\{([^{}]+)\}/g, (match, content) => {
+        // Processa template com substituições e spin
+        function buildMessage(template, nome, unidade, curso) {
+            let msg = template
+                .replace(/\[NOME\]/g, nome)
+                .replace(/\[UNIDADE\]/g, unidade)
+                .replace(/\[CURSO\]/g, curso)
+                .replace(/\[CUMPRIMENTO\]/g, getGreeting());
+            
+            // Spin: {opção1|opção2}
+            msg = msg.replace(/\{([^{}]+)\}/g, (match, content) => {
                 const choices = content.split('|');
                 return choices[Math.floor(Math.random() * choices.length)];
             });
+            
+            // Adiciona caracteres invisíveis para evitar rastreamento
+            msg += '\u200B'.repeat(Math.floor(Math.random() * 5));
+            return msg;
         }
 
+        // Gera o link do WhatsApp dinamicamente
+        function getWhatsAppLink(telefone, nome, unidade, curso, template) {
+            const msg = buildMessage(template, nome, unidade, curso);
+            const tel = telefone.replace(/\D/g, '');
+            const fullTel = tel.startsWith('55') ? tel : '55' + tel;
+            return `https://wa.me/${fullTel}?text=${encodeURIComponent(msg)}`;
+        }
+
+        // ================= PERSISTÊNCIA DE MODELO =================
+        let currentTemplate = "";
+        async function saveTemplate() {
+            const template = document.getElementById('msg_template').value;
+            await db.collection("config").doc("messageTemplate").set({ template });
+            currentTemplate = template;
+            alert("Modelo salvo com sucesso!");
+        }
+
+        async function loadTemplate() {
+            const doc = await db.collection("config").doc("messageTemplate").get();
+            if (doc.exists) {
+                currentTemplate = doc.data().template;
+                document.getElementById('msg_template').value = currentTemplate;
+            } else {
+                currentTemplate = document.getElementById('msg_template').value;
+            }
+        }
+
+        // ================= CRUD CONTATOS =================
         async function processCSV() {
             const file = document.getElementById('csv_file').files[0];
-            const template = document.getElementById('msg_template').value;
             if(!file) return alert("Selecione o CSV.");
+            // Atualiza o template atual antes de processar
+            currentTemplate = document.getElementById('msg_template').value;
+            await saveTemplate(); // salva também no banco
 
             const reader = new FileReader();
             reader.readAsText(file, 'ISO-8859-1'); 
-            
             reader.onload = async function(e) {
                 const lines = e.target.result.split(/\r?\n/);
                 let batchData = [];
-                
                 lines.forEach((line, i) => {
                     if(i === 0 || !line.trim()) return;
                     const c = line.split(';');
                     if(c.length >= 5) {
                         const tel = c[2].replace(/\D/g,'');
-                        let msg = template.replace('[NOME]', c[1]).replace('[UNIDADE]', c[3]).replace('[CURSO]', c[4]);
-                        msg = spinText(msg) + '\u200B'.repeat(Math.floor(Math.random()*5));
-                        
                         batchData.push({
-                            id: c[0].trim(), nome: c[1].trim(), telefone: tel, unidade: c[3].trim(), 
-                            curso: c[4].trim(), status: 'Pendente', 
-                            link: `https://wa.me/${tel.startsWith('55')?tel:'55'+tel}?text=${encodeURIComponent(msg)}`,
-                            selected: false, timestamp: Date.now()
+                            id: c[0].trim(),
+                            nome: c[1].trim(),
+                            telefone: tel,
+                            unidade: c[3].trim(),
+                            curso: c[4].trim(),
+                            status: 'Pendente',
+                            selected: false,
+                            timestamp: Date.now()
                         });
                     }
                 });
-
                 batchData.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
                 if(batchData.length) await saveToFirebase(batchData);
             };
@@ -215,10 +279,11 @@
             btn.innerText = "⏳ Sincronizando...";
             try {
                 for (const item of data) {
-                    await db.collection("contatos").doc(item.id).set(item);
+                    await db.collection("contatos").doc(item.id).set(item, { merge: true });
                 }
-                alert("Importação A-Z concluída!");
+                alert("Importação concluída!");
                 btn.innerText = "🚀 Processar e Sincronizar";
+                await loadFromFirebase();
                 switchTab('tab-manage');
             } catch (error) {
                 alert("Erro: " + error.message);
@@ -230,84 +295,305 @@
             const snap = await db.collection("contatos").get();
             rawData = snap.docs.map(doc => doc.data());
             rawData.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
-            updateFilters();
-            renderTable();
+            updateFiltersOptions();
+            applyFiltersAndRender();
             updateSafetyUI();
+            renderReport();
         }
 
-        function updateFilters() {
+        function updateFiltersOptions() {
             const units = [...new Set(rawData.map(i => i.unidade))].sort();
             const el = document.getElementById('f_unidade');
             el.innerHTML = '<option value="">Todas Unidades</option>';
-            units.forEach(u => el.innerHTML += `<option value="${u}">${u}</option>`);
+            units.forEach(u => el.innerHTML += `<option value="${u}" ${currentFilters.unidade === u ? 'selected' : ''}>${u}</option>`);
+            document.getElementById('f_status').value = currentFilters.status;
+            document.getElementById('search_term').value = currentFilters.search;
+        }
+
+        function applyFiltersAndRender() {
+            currentFilters.unidade = document.getElementById('f_unidade').value;
+            currentFilters.status = document.getElementById('f_status').value;
+            currentFilters.search = document.getElementById('search_term').value.toLowerCase();
+            localStorage.setItem('filter_unidade', currentFilters.unidade);
+            localStorage.setItem('filter_status', currentFilters.status);
+            localStorage.setItem('filter_search', currentFilters.search);
+            renderTable();
         }
 
         function renderTable() {
-            const fUni = document.getElementById('f_unidade').value;
-            const fStat = document.getElementById('f_status').value;
-            const search = document.getElementById('search_term').value.toLowerCase();
             const tbody = document.getElementById('table_body');
             tbody.innerHTML = '';
-            
-            rawData.filter(i => {
-                return (!fUni || i.unidade === fUni) && (!fStat || i.status === fStat) && 
-                       (!search || i.nome.toLowerCase().includes(search) || i.id.toLowerCase().includes(search));
-            }).forEach(item => {
+            const filtered = rawData.filter(item => {
+                return (!currentFilters.unidade || item.unidade === currentFilters.unidade) &&
+                       (!currentFilters.status || item.status === currentFilters.status) &&
+                       (!currentFilters.search || item.nome.toLowerCase().includes(currentFilters.search) || item.id.toLowerCase().includes(currentFilters.search));
+            });
+            filtered.forEach(item => {
+                let bgColor = 'white';
+                if (item.status === 'Enviado') bgColor = '#fffbeb';
+                else if (item.status === 'Número inválido') bgColor = '#ffe6e6';
+                else if (item.status === 'Pago') bgColor = '#e6f7e6';
+                else if (item.status === 'Boleto indisponível') bgColor = '#fff0e0';
+                
                 const tr = document.createElement('tr');
-                tr.style.background = item.status === 'Enviado' ? '#fffbeb' : 'white';
+                tr.style.background = bgColor;
                 tr.innerHTML = `
-                    <td><input type="checkbox" ${item.selected?'checked':''} onchange="toggleSelect('${item.id}')"></td>
-                    <td>${item.id}</td>
-                    <td>${item.nome}</td>
-                    <td>${item.unidade}</td>
-                    <td>${item.curso}</td>
-                    <td><a href="${item.link}" target="_blank" class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</a></td>`;
+                    <td><input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleSelect('${item.id}')"></td>
+                    <td>${escapeHtml(item.id)}</td>
+                    <td>${escapeHtml(item.nome)}</td>
+                    <td>${escapeHtml(item.unidade)}</td>
+                    <td>${escapeHtml(item.curso)}</td>
+                    <td>
+                        <select class="status-select" onchange="updateStatus('${item.id}', this.value)">
+                            <option value="Pendente" ${item.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                            <option value="Enviado" ${item.status === 'Enviado' ? 'selected' : ''}>Enviado</option>
+                            <option value="Número inválido" ${item.status === 'Número inválido' ? 'selected' : ''}>Número inválido</option>
+                            <option value="Boleto indisponível" ${item.status === 'Boleto indisponível' ? 'selected' : ''}>Boleto indisponível</option>
+                            <option value="Pago" ${item.status === 'Pago' ? 'selected' : ''}>Pago</option>
+                        </select>
+                    </td>
+                    <td>
+                        ${item.status === 'Número inválido' || item.status === 'Pago' ? 
+                            '<span style="color:gray">❌ Ação bloqueada</span>' : 
+                            `<button class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</button>`}
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
         }
 
-        async function handleSend(id) {
-            if (isLocked) { event.preventDefault(); return alert("Segurança ativa! Aguarde."); }
-            if (dailyCount >= MAX_DIARIO) { event.preventDefault(); return alert("Limite diário atingido!"); }
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
+        async function updateStatus(id, newStatus) {
+            const item = rawData.find(x => x.id === id);
+            if(item) {
+                item.status = newStatus;
+                await db.collection("contatos").doc(id).update({ status: newStatus });
+                renderTable();
+                renderReport();
+            }
+        }
+
+        async function handleSend(id) {
+            if (isLocked) { alert("Segurança ativa! Aguarde o timer."); return; }
+            if (dailyCount >= MAX_DIARIO) { alert("Limite diário atingido! Volte amanhã."); return; }
+            
+            const contato = rawData.find(c => c.id === id);
+            if (!contato) return;
+            if (contato.status === 'Número inválido' || contato.status === 'Pago') {
+                alert("Este contato está com status que impede o envio.");
+                return;
+            }
+            
+            // Garante que temos o template mais recente
+            await loadTemplate();
+            
+            // Gera link dinâmico com cumprimento atual
+            const link = getWhatsAppLink(contato.telefone, contato.nome, contato.unidade, contato.curso, currentTemplate);
+            
+            // Abre o WhatsApp
+            window.open(link, '_blank');
+            
+            // Atualiza status e contadores
             sessionCount++;
             dailyCount++;
             localStorage.setItem('dailyCount', dailyCount);
+            await db.collection("contatos").doc(id).update({ status: 'Enviado' });
+            await loadFromFirebase();
             
-            await db.collection("contatos").doc(id).update({status: 'Enviado'});
-            loadFromFirebase();
-            
+            // Inicia timer de segurança
             isLocked = true;
             const bar = document.getElementById('safety-bar');
             let isLong = sessionCount % BATCH_SIZE === 0;
             let secondsWait = isLong ? (LONG_PAUSE_MIN * 60) : (Math.floor(Math.random() * (MAX_DELAY - MIN_DELAY + 1)) + MIN_DELAY);
-
+            
             bar.className = isLong ? 'waiting' : 'locked';
             let t = secondsWait;
             const int = setInterval(() => {
                 const m = Math.floor(t / 60), s = t % 60;
-                document.getElementById('safety-main').innerText = isLong ? `☕ PAUSA: ${m}m ${s}s` : `⏳ PRÓXIMO: ${t}s`;
+                document.getElementById('safety-main').innerText = isLong ? `☕ PAUSA LONGA: ${m}m ${s}s` : `⏳ PRÓXIMO EM: ${t}s`;
                 updateSafetyUI();
-                
                 if (t-- <= 0) {
                     clearInterval(int);
                     isLocked = false;
                     bar.className = 'safe';
                     document.getElementById('safety-main').innerText = "✅ SISTEMA PRONTO";
-                    playSuccessBeep(); // <--- Toca o bip ao liberar
+                    playSuccessBeep();
                 }
             }, 1000);
+        }
+
+        function playSuccessBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } catch (e) { console.log("Áudio não suportado"); }
         }
 
         function updateSafetyUI() {
             document.getElementById('safety-sub').innerText = `Hoje: ${dailyCount}/${MAX_DIARIO} | Sessão: ${sessionCount}`;
         }
 
-        function toggleSelect(id) { const i = rawData.find(x => x.id === id); if(i) i.selected = !i.selected; }
-        function toggleAll(src) { rawData.forEach(i => i.selected = src.checked); renderTable(); }
-        async function bulkDelete() { if(confirm("Limpar lista?")) { for(const i of rawData) await db.collection("contatos").doc(i.id).delete(); loadFromFirebase(); } }
+        function toggleSelect(id) {
+            const i = rawData.find(x => x.id === id);
+            if(i) i.selected = !i.selected;
+        }
+        
+        function toggleAll(src) {
+            rawData.forEach(i => i.selected = src.checked);
+            renderTable();
+        }
+        
+        async function bulkDeleteSelected() {
+            const selectedIds = rawData.filter(i => i.selected).map(i => i.id);
+            if(selectedIds.length === 0) return alert("Nenhum contato selecionado.");
+            if(confirm(`Excluir ${selectedIds.length} contato(s) permanentemente?`)) {
+                for(const id of selectedIds) {
+                    await db.collection("contatos").doc(id).delete();
+                }
+                await loadFromFirebase();
+            }
+        }
 
-        window.onload = loadFromFirebase;
+        async function bulkUpdateStatus(newStatus) {
+            const selectedIds = rawData.filter(i => i.selected).map(i => i.id);
+            if(selectedIds.length === 0) return alert("Nenhum contato selecionado.");
+            for(const id of selectedIds) {
+                await db.collection("contatos").doc(id).update({ status: newStatus });
+            }
+            await loadFromFirebase();
+        }
+
+        // ================= RELATÓRIOS =================
+        let financialData = { totalReceived: 0, totalBoletos: 0 };
+        
+        async function loadReportData() {
+            const doc = await db.collection("config").doc("reportFinance").get();
+            if (doc.exists) {
+                financialData = doc.data();
+                document.getElementById('total_received').value = financialData.totalReceived || 0;
+                document.getElementById('total_boletos').value = financialData.totalBoletos || 0;
+            } else {
+                document.getElementById('total_received').value = 0;
+                document.getElementById('total_boletos').value = 0;
+            }
+        }
+        
+        async function saveReportData() {
+            financialData.totalReceived = parseFloat(document.getElementById('total_received').value) || 0;
+            financialData.totalBoletos = parseFloat(document.getElementById('total_boletos').value) || 0;
+            await db.collection("config").doc("reportFinance").set(financialData);
+            renderReport();
+            alert("Dados financeiros salvos!");
+        }
+        
+        function renderReport() {
+            if (!rawData.length) {
+                document.getElementById('report_stats').innerHTML = '<p>Nenhum dado carregado. Importe contatos primeiro.</p>';
+                document.getElementById('report_comment').innerHTML = '';
+                return;
+            }
+            
+            const total = rawData.length;
+            const enviados = rawData.filter(c => c.status === 'Enviado').length;
+            const pendentes = rawData.filter(c => c.status === 'Pendente').length;
+            const invalidos = rawData.filter(c => c.status === 'Número inválido').length;
+            const boletoIndisponivel = rawData.filter(c => c.status === 'Boleto indisponível').length;
+            const pagos = rawData.filter(c => c.status === 'Pago').length;
+            
+            const totalReceived = financialData.totalReceived;
+            const totalBoletosSentValue = financialData.totalBoletos;
+            
+            let conversionRate = 0;
+            if (totalBoletosSentValue > 0 && totalReceived > 0) {
+                conversionRate = totalReceived / totalBoletosSentValue;
+            } else if (enviados > 0 && totalReceived > 0) {
+                conversionRate = totalReceived / enviados;
+            }
+            
+            const potencialAtivo = pendentes + (boletoIndisponivel * 0.3);
+            let valorMedioPorContato = 0;
+            if (totalBoletosSentValue > 0) {
+                valorMedioPorContato = totalBoletosSentValue / (enviados + (pendentes * 0.7) + pagos);
+            } else if (enviados > 0) {
+                valorMedioPorContato = totalReceived / (enviados + pagos);
+            } else {
+                valorMedioPorContato = 500;
+            }
+            
+            const otimista = totalReceived + (potencialAtivo * valorMedioPorContato * 1.2);
+            const pessimista = totalReceived + (pendentes * valorMedioPorContato * 0.3);
+            const tendencia = totalReceived + (pendentes * valorMedioPorContato * conversionRate);
+            
+            const statsHtml = `
+                <div class="report-stats">
+                    <div class="stat-card"><div class="stat-number">${total}</div><div>Total Contatos</div></div>
+                    <div class="stat-card"><div class="stat-number">${enviados}</div><div>Enviados</div></div>
+                    <div class="stat-card"><div class="stat-number">${pendentes}</div><div>Pendentes</div></div>
+                    <div class="stat-card"><div class="stat-number">${invalidos}</div><div>Números inválidos</div></div>
+                    <div class="stat-card"><div class="stat-number">${boletoIndisponivel}</div><div>Boleto indisponível</div></div>
+                    <div class="stat-card"><div class="stat-number">${pagos}</div><div>Pagos</div></div>
+                    <div class="stat-card"><div class="stat-number">R$ ${totalReceived.toFixed(2)}</div><div>Recebido até agora</div></div>
+                </div>
+                <div class="projection-box">
+                    <h3>📈 Projeção de Arrecadação (R$)</h3>
+                    <ul style="list-style: none; padding-left:0;">
+                        <li>🔮 <strong>Cenário Otimista:</strong> R$ ${otimista.toFixed(2)}</li>
+                        <li>⚠️ <strong>Cenário Pessimista:</strong> R$ ${pessimista.toFixed(2)}</li>
+                        <li>📊 <strong>Tendência Atual:</strong> R$ ${tendencia.toFixed(2)}</li>
+                    </ul>
+                </div>
+            `;
+            document.getElementById('report_stats').innerHTML = statsHtml;
+            
+            const comentario = `
+                <strong>📋 Análise da Diretoria:</strong><br>
+                Total de ${enviados} mensagens enviadas, R$ ${totalReceived.toFixed(2)} já recebidos. 
+                ${pagos} contatos pagos confirmados. Restam ${pendentes} pendentes e ${boletoIndisponivel} com boleto indisponível.
+                Com ticket médio de R$ ${valorMedioPorContato.toFixed(2)} e taxa de conversão de ${(conversionRate*100).toFixed(1)}%, a tendência é atingir R$ ${tendencia.toFixed(2)}.
+                Estratégia: priorizar contatos pendentes com maior potencial e renegociar boletos.
+            `;
+            document.getElementById('report_comment').innerHTML = comentario;
+        }
+
+        // ================= NAVEGAÇÃO =================
+        async function switchTab(id) {
+            document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${id}')"]`).classList.add('active');
+            if (id === 'tab-manage') {
+                await loadFromFirebase();
+            } else if (id === 'tab-reports') {
+                await loadReportData();
+                renderReport();
+            }
+        }
+
+        window.onload = async () => {
+            await loadTemplate();
+            await loadFromFirebase();
+            await loadReportData();
+            if (localStorage.getItem('filter_unidade')) {
+                currentFilters.unidade = localStorage.getItem('filter_unidade');
+            }
+            if (localStorage.getItem('filter_status')) {
+                currentFilters.status = localStorage.getItem('filter_status');
+            }
+            if (localStorage.getItem('filter_search')) {
+                currentFilters.search = localStorage.getItem('filter_search');
+            }
+            updateFiltersOptions();
+            applyFiltersAndRender();
+        };
     </script>
 </body>
 </html>
