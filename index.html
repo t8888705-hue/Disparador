@@ -5,8 +5,13 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>SmartTools Pro — Gestão Acadêmica</title>
     
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -42,6 +47,7 @@
         .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; font-size: 11px; padding: 6px 10px; border-radius: 4px; display: inline-block; cursor: pointer; border: none; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn-success { background: var(--paid); color: white; }
         
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
         .editor-toolbar { background: #f8fafc; padding: 15px; border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -60,6 +66,10 @@
         .comment-box { background: #fff7e6; border-left: 5px solid var(--warning); padding: 15px; margin-top: 20px; font-style: italic; }
         .financial-input { display: flex; gap: 15px; flex-wrap: wrap; margin: 20px 0; align-items: flex-end; }
         .financial-input div { flex: 1; min-width: 150px; }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        #report-container { transition: all 0.3s; }
+        .warning-note { color: #d97706; font-size: 12px; margin-top: 5px; }
+        .info-note { color: #3b82f6; font-size: 12px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -79,7 +89,7 @@
         <div id="tab-import" class="tab-content active">
             <h2>Configurar Campanha</h2>
             <div class="editor-toolbar">
-                <small style="font-weight: bold; color: #64748b;">Variáveis: [NOME] [UNIDADE] [CURSO] [CUMPRIMENTO] (automático: Bom dia, Boa tarde, Boa noite) e {opção1|opção2} para variação.</small>
+                <small style="font-weight: bold; color: #64748b;">Variáveis: [NOME] [UNIDADE] [CURSO] [CUMPRIMENTO] (automático: Bom dia/Boa tarde/Boa noite) e {opção1|opção2} para variação.</small>
                 <button onclick="saveTemplate()" class="btn btn-primary btn-sm">💾 Salvar Modelo</button>
             </div>
             <textarea id="msg_template" placeholder="Digite sua mensagem...">[CUMPRIMENTO] [NOME], referente à matrícula no curso [CURSO] da unidade [UNIDADE]. {Podemos conversar?|Tudo bem?}</textarea>
@@ -126,23 +136,32 @@
         </div>
 
         <div id="tab-reports" class="tab-content">
-            <h2>📊 Análise Estratégica de Arrecadação</h2>
-            <div class="financial-input">
-                <div>
-                    <label>💰 Total Recebido (R$)</label>
-                    <input type="number" id="total_received" step="0.01" placeholder="0,00" value="0">
-                </div>
-                <div>
-                    <label>📄 Total Valor dos Boletos Enviados (R$)</label>
-                    <input type="number" id="total_boletos" step="0.01" placeholder="0,00" value="0">
-                </div>
-                <div>
-                    <button onclick="saveReportData()" class="btn btn-primary btn-sm" style="margin-top: 22px;">💾 Salvar dados financeiros</button>
-                </div>
+            <div class="report-header">
+                <h2>📊 Análise Estratégica de Arrecadação</h2>
+                <button onclick="generatePDF()" class="btn btn-success">📄 Gerar Relatório PDF</button>
             </div>
-            
-            <div id="report_stats"></div>
-            <div id="report_comment" class="comment-box"></div>
+            <div id="report-container">
+                <div class="financial-input">
+                    <div>
+                        <label>💰 Total Recebido (R$) <span style="font-size: 11px;">(opcional)</span></label>
+                        <input type="number" id="total_received" step="0.01" placeholder="0,00" value="0" oninput="updateFinancialPreview()">
+                    </div>
+                    <div>
+                        <label>📄 Total Valor dos Boletos Enviados (R$) <span style="font-size: 11px;">(opcional)</span></label>
+                        <input type="number" id="total_boletos" step="0.01" placeholder="0,00" value="0" oninput="updateFinancialPreview()">
+                    </div>
+                    <div>
+                        <label>🎯 Valor Médio por Aluno (R$) <span style="font-size: 11px;">(base para projeções)</span></label>
+                        <input type="number" id="manual_avg_value" step="0.01" placeholder="Ex: 850,00" value="" oninput="updateFinancialPreview()">
+                    </div>
+                    <div>
+                        <button onclick="saveReportData()" class="btn btn-primary btn-sm" style="margin-top: 22px;">💾 Salvar dados financeiros</button>
+                    </div>
+                </div>
+                
+                <div id="report_stats"></div>
+                <div id="report_comment" class="comment-box"></div>
+            </div>
         </div>
     </div>
 
@@ -160,7 +179,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ================= SEGURANÇA MELHORADA =================
+        // ================= SEGURANÇA =================
         const MAX_DIARIO = 80;
         const BATCH_SIZE = 12;
         const MIN_DELAY = 60;
@@ -185,6 +204,11 @@
             search: localStorage.getItem('filter_search') || ''
         };
 
+        // ================= FUNÇÃO DE FORMATAÇÃO DE MOEDA BRASILEIRA =================
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
         // ================= FUNÇÃO DE CUMPRIMENTO DINÂMICO =================
         function getGreeting() {
             const hour = new Date().getHours();
@@ -193,7 +217,6 @@
             return "Boa noite";
         }
 
-        // Processa template com substituições e spin
         function buildMessage(template, nome, unidade, curso) {
             let msg = template
                 .replace(/\[NOME\]/g, nome)
@@ -201,18 +224,15 @@
                 .replace(/\[CURSO\]/g, curso)
                 .replace(/\[CUMPRIMENTO\]/g, getGreeting());
             
-            // Spin: {opção1|opção2}
             msg = msg.replace(/\{([^{}]+)\}/g, (match, content) => {
                 const choices = content.split('|');
                 return choices[Math.floor(Math.random() * choices.length)];
             });
             
-            // Adiciona caracteres invisíveis para evitar rastreamento
             msg += '\u200B'.repeat(Math.floor(Math.random() * 5));
             return msg;
         }
 
-        // Gera o link do WhatsApp dinamicamente
         function getWhatsAppLink(telefone, nome, unidade, curso, template) {
             const msg = buildMessage(template, nome, unidade, curso);
             const tel = telefone.replace(/\D/g, '');
@@ -220,7 +240,7 @@
             return `https://wa.me/${fullTel}?text=${encodeURIComponent(msg)}`;
         }
 
-        // ================= PERSISTÊNCIA DE MODELO =================
+        // ================= PERSISTÊNCIA MODELO =================
         let currentTemplate = "";
         async function saveTemplate() {
             const template = document.getElementById('msg_template').value;
@@ -243,9 +263,8 @@
         async function processCSV() {
             const file = document.getElementById('csv_file').files[0];
             if(!file) return alert("Selecione o CSV.");
-            // Atualiza o template atual antes de processar
             currentTemplate = document.getElementById('msg_template').value;
-            await saveTemplate(); // salva também no banco
+            await saveTemplate();
 
             const reader = new FileReader();
             reader.readAsText(file, 'ISO-8859-1'); 
@@ -338,12 +357,12 @@
                 const tr = document.createElement('tr');
                 tr.style.background = bgColor;
                 tr.innerHTML = `
-                    <td><input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleSelect('${item.id}')"></td>
-                    <td>${escapeHtml(item.id)}</td>
-                    <td>${escapeHtml(item.nome)}</td>
-                    <td>${escapeHtml(item.unidade)}</td>
-                    <td>${escapeHtml(item.curso)}</td>
-                    <td>
+                     <td><input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleSelect('${item.id}')"></td>
+                     <td>${escapeHtml(item.id)}</td>
+                     <td>${escapeHtml(item.nome)}</td>
+                     <td>${escapeHtml(item.unidade)}</td>
+                     <td>${escapeHtml(item.curso)}</td>
+                     <td>
                         <select class="status-select" onchange="updateStatus('${item.id}', this.value)">
                             <option value="Pendente" ${item.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Enviado" ${item.status === 'Enviado' ? 'selected' : ''}>Enviado</option>
@@ -351,12 +370,12 @@
                             <option value="Boleto indisponível" ${item.status === 'Boleto indisponível' ? 'selected' : ''}>Boleto indisponível</option>
                             <option value="Pago" ${item.status === 'Pago' ? 'selected' : ''}>Pago</option>
                         </select>
-                    </td>
-                    <td>
+                     </td>
+                     <td>
                         ${item.status === 'Número inválido' || item.status === 'Pago' ? 
                             '<span style="color:gray">❌ Ação bloqueada</span>' : 
                             `<button class="btn btn-whatsapp" onclick="handleSend('${item.id}')">📱 ENVIAR</button>`}
-                    </td>
+                     </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -385,23 +404,16 @@
                 return;
             }
             
-            // Garante que temos o template mais recente
             await loadTemplate();
-            
-            // Gera link dinâmico com cumprimento atual
             const link = getWhatsAppLink(contato.telefone, contato.nome, contato.unidade, contato.curso, currentTemplate);
-            
-            // Abre o WhatsApp
             window.open(link, '_blank');
             
-            // Atualiza status e contadores
             sessionCount++;
             dailyCount++;
             localStorage.setItem('dailyCount', dailyCount);
             await db.collection("contatos").doc(id).update({ status: 'Enviado' });
             await loadFromFirebase();
             
-            // Inicia timer de segurança
             isLocked = true;
             const bar = document.getElementById('safety-bar');
             let isLong = sessionCount % BATCH_SIZE === 0;
@@ -473,8 +485,8 @@
             await loadFromFirebase();
         }
 
-        // ================= RELATÓRIOS =================
-        let financialData = { totalReceived: 0, totalBoletos: 0 };
+        // ================= RELATÓRIOS (CORRIGIDO COM FORMATAÇÃO BR) =================
+        let financialData = { totalReceived: 0, totalBoletos: 0, manualAvgValue: null };
         
         async function loadReportData() {
             const doc = await db.collection("config").doc("reportFinance").get();
@@ -482,15 +494,29 @@
                 financialData = doc.data();
                 document.getElementById('total_received').value = financialData.totalReceived || 0;
                 document.getElementById('total_boletos').value = financialData.totalBoletos || 0;
+                document.getElementById('manual_avg_value').value = financialData.manualAvgValue !== null && financialData.manualAvgValue !== undefined ? financialData.manualAvgValue : '';
             } else {
                 document.getElementById('total_received').value = 0;
                 document.getElementById('total_boletos').value = 0;
+                document.getElementById('manual_avg_value').value = '';
+                financialData = { totalReceived: 0, totalBoletos: 0, manualAvgValue: null };
             }
+            renderReport();
+        }
+        
+        function updateFinancialPreview() {
+            financialData.totalReceived = parseFloat(document.getElementById('total_received').value) || 0;
+            financialData.totalBoletos = parseFloat(document.getElementById('total_boletos').value) || 0;
+            const manualAvg = document.getElementById('manual_avg_value').value;
+            financialData.manualAvgValue = manualAvg ? parseFloat(manualAvg) : null;
+            renderReport();
         }
         
         async function saveReportData() {
             financialData.totalReceived = parseFloat(document.getElementById('total_received').value) || 0;
             financialData.totalBoletos = parseFloat(document.getElementById('total_boletos').value) || 0;
+            const manualAvg = document.getElementById('manual_avg_value').value;
+            financialData.manualAvgValue = manualAvg ? parseFloat(manualAvg) : null;
             await db.collection("config").doc("reportFinance").set(financialData);
             renderReport();
             alert("Dados financeiros salvos!");
@@ -510,29 +536,62 @@
             const boletoIndisponivel = rawData.filter(c => c.status === 'Boleto indisponível').length;
             const pagos = rawData.filter(c => c.status === 'Pago').length;
             
-            const totalReceived = financialData.totalReceived;
+            let totalReceived = financialData.totalReceived;
             const totalBoletosSentValue = financialData.totalBoletos;
+            const manualAvgValue = financialData.manualAvgValue;
             
-            let conversionRate = 0;
-            if (totalBoletosSentValue > 0 && totalReceived > 0) {
-                conversionRate = totalReceived / totalBoletosSentValue;
-            } else if (enviados > 0 && totalReceived > 0) {
-                conversionRate = totalReceived / enviados;
-            }
-            
-            const potencialAtivo = pendentes + (boletoIndisponivel * 0.3);
-            let valorMedioPorContato = 0;
-            if (totalBoletosSentValue > 0) {
-                valorMedioPorContato = totalBoletosSentValue / (enviados + (pendentes * 0.7) + pagos);
-            } else if (enviados > 0) {
-                valorMedioPorContato = totalReceived / (enviados + pagos);
+            // DETERMINA TICKET MÉDIO
+            let ticketMedio = 0;
+            let ticketSource = "calculado";
+            if (manualAvgValue !== null && manualAvgValue > 0) {
+                ticketMedio = manualAvgValue;
+                ticketSource = "manual";
+            } else if (totalBoletosSentValue > 0) {
+                const totalContatosRelevantes = enviados + pagos + (pendentes * 0.7);
+                if (totalContatosRelevantes > 0) {
+                    ticketMedio = totalBoletosSentValue / totalContatosRelevantes;
+                } else {
+                    ticketMedio = 0;
+                }
+            } else if (enviados + pagos > 0 && totalReceived > 0) {
+                ticketMedio = totalReceived / (enviados + pagos);
             } else {
-                valorMedioPorContato = 500;
+                ticketMedio = 0;
             }
             
-            const otimista = totalReceived + (potencialAtivo * valorMedioPorContato * 1.2);
-            const pessimista = totalReceived + (pendentes * valorMedioPorContato * 0.3);
-            const tendencia = totalReceived + (pendentes * valorMedioPorContato * conversionRate);
+            // AJUSTA TOTAL RECEBIDO SE HOUVER PAGOS SEM VALOR INFORMADO
+            let totalReceivedEffective = totalReceived;
+            let receivedAdjusted = false;
+            if (pagos > 0 && totalReceived === 0 && ticketMedio > 0) {
+                totalReceivedEffective = pagos * ticketMedio;
+                receivedAdjusted = true;
+            }
+            
+            // TAXA DE CONVERSÃO (para tendência)
+            let conversionRate = 0;
+            if (totalBoletosSentValue > 0 && totalReceivedEffective > 0) {
+                conversionRate = totalReceivedEffective / totalBoletosSentValue;
+            } else if (enviados > 0 && totalReceivedEffective > 0) {
+                conversionRate = totalReceivedEffective / enviados;
+            } else {
+                conversionRate = 0.3; // padrão
+            }
+            
+            // ========== CÁLCULO DO POTENCIAL (INCLUI ENVIADOS NÃO PAGOS) ==========
+            const enviadosNaoPagos = enviados - pagos;
+            const potenciais = pendentes + enviadosNaoPagos + (boletoIndisponivel * 0.5);
+            
+            // Projeções adicionais
+            let adicionalOtimista = 0, adicionalPessimista = 0, adicionalTendencia = 0;
+            if (ticketMedio > 0 && potenciais > 0) {
+                adicionalOtimista = potenciais * ticketMedio * 0.7;    // 70% dos potenciais convertem
+                adicionalPessimista = potenciais * ticketMedio * 0.3;  // 30% convertem
+                adicionalTendencia = potenciais * ticketMedio * conversionRate; // usando taxa histórica
+            }
+            
+            const projecaoOtimista = totalReceivedEffective + adicionalOtimista;
+            const projecaoPessimista = totalReceivedEffective + adicionalPessimista;
+            const projecaoTendencia = totalReceivedEffective + adicionalTendencia;
             
             const statsHtml = `
                 <div class="report-stats">
@@ -542,27 +601,76 @@
                     <div class="stat-card"><div class="stat-number">${invalidos}</div><div>Números inválidos</div></div>
                     <div class="stat-card"><div class="stat-number">${boletoIndisponivel}</div><div>Boleto indisponível</div></div>
                     <div class="stat-card"><div class="stat-number">${pagos}</div><div>Pagos</div></div>
-                    <div class="stat-card"><div class="stat-number">R$ ${totalReceived.toFixed(2)}</div><div>Recebido até agora</div></div>
+                    <div class="stat-card"><div class="stat-number">${formatCurrency(totalReceivedEffective)}</div><div>Recebido (${receivedAdjusted ? 'estimado' : 'informado'})</div></div>
                 </div>
                 <div class="projection-box">
-                    <h3>📈 Projeção de Arrecadação (R$)</h3>
+                    <h3>📈 Projeção Final de Arrecadação (R$)</h3>
                     <ul style="list-style: none; padding-left:0;">
-                        <li>🔮 <strong>Cenário Otimista:</strong> R$ ${otimista.toFixed(2)}</li>
-                        <li>⚠️ <strong>Cenário Pessimista:</strong> R$ ${pessimista.toFixed(2)}</li>
-                        <li>📊 <strong>Tendência Atual:</strong> R$ ${tendencia.toFixed(2)}</li>
+                        <li>🔮 <strong>Cenário Otimista (70% dos potenciais):</strong> ${formatCurrency(projecaoOtimista)}</li>
+                        <li>⚠️ <strong>Cenário Pessimista (30% dos potenciais):</strong> ${formatCurrency(projecaoPessimista)}</li>
+                        <li>📊 <strong>Tendência Atual (taxa histórica):</strong> ${formatCurrency(projecaoTendencia)}</li>
                     </ul>
+                    <p><small>Ticket médio: ${formatCurrency(ticketMedio)} (${ticketSource}) • Potenciais a converter: ${potenciais} (pendentes + enviados não pagos + 50% boletos indisponíveis)</small></p>
                 </div>
             `;
             document.getElementById('report_stats').innerHTML = statsHtml;
             
-            const comentario = `
-                <strong>📋 Análise da Diretoria:</strong><br>
-                Total de ${enviados} mensagens enviadas, R$ ${totalReceived.toFixed(2)} já recebidos. 
-                ${pagos} contatos pagos confirmados. Restam ${pendentes} pendentes e ${boletoIndisponivel} com boleto indisponível.
-                Com ticket médio de R$ ${valorMedioPorContato.toFixed(2)} e taxa de conversão de ${(conversionRate*100).toFixed(1)}%, a tendência é atingir R$ ${tendencia.toFixed(2)}.
-                Estratégia: priorizar contatos pendentes com maior potencial e renegociar boletos.
-            `;
+            // ========== COMENTÁRIO ANALÍTICO ==========
+            let comentario = `<strong>📋 Comentário:</strong><br>`;
+            comentario += `Total já recebido: ${formatCurrency(totalReceivedEffective)} (${receivedAdjusted ? 'estimado com base nos pagos e ticket médio' : 'informado'}). `;
+            comentario += `${pagos} contatos pagos confirmados. `;
+            comentario += `Existem ${enviadosNaoPagos} enviados que ainda não pagaram e ${pendentes} pendentes. `;
+            comentario += `Total de potenciais (com peso 50% para boletos indisponíveis): ${potenciais}.<br>`;
+            comentario += `Considerando um ticket médio de ${formatCurrency(ticketMedio)} (${ticketSource}):<br>`;
+            comentario += `- <strong>Otimista (70% conversão):</strong> ${formatCurrency(projecaoOtimista)}<br>`;
+            comentario += `- <strong>Pessimista (30% conversão):</strong> ${formatCurrency(projecaoPessimista)}<br>`;
+            comentario += `- <strong>Tendência (taxa histórica de ${(conversionRate*100).toFixed(1)}%):</strong> ${formatCurrency(projecaoTendencia)}<br>`;
+            comentario += `Estratégia: priorizar os ${enviadosNaoPagos} já contatados e renegociar boletos para maximizar a conversão.`;
+            
+            if (pagos > 0 && totalReceived === 0 && !receivedAdjusted) {
+                comentario += `<br><br><span class="warning-note">⚠️ Atenção: Existem ${pagos} contatos marcados como "Pago", mas o total recebido informado é R$ 0,00. Utilizamos uma estimativa com base no ticket médio para os cálculos, mas para maior precisão, preencha o total recebido.</span>`;
+            } else if (pagos > 0 && totalReceived === 0 && receivedAdjusted) {
+                comentario += `<br><br><span class="info-note">ℹ️ Informação: O total recebido foi estimado em ${formatCurrency(totalReceivedEffective)} com base nos ${pagos} pagos e no ticket médio de ${formatCurrency(ticketMedio)}. Para maior precisão, informe o valor real recebido.</span>`;
+            }
+            
             document.getElementById('report_comment').innerHTML = comentario;
+        }
+
+        // ================= PDF GENERATION =================
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('report-container');
+            
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Gerando PDF...";
+            btn.disabled = true;
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                const imgWidth = 190;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let position = 10;
+                
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                pdf.save(`relatorio_smarttools_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.pdf`);
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                alert('Erro ao gerar PDF. Tente novamente.');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
 
         // ================= NAVEGAÇÃO =================
@@ -574,7 +682,6 @@
                 await loadFromFirebase();
             } else if (id === 'tab-reports') {
                 await loadReportData();
-                renderReport();
             }
         }
 
